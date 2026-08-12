@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.4.5',
+    title: '更新ダウンロード表示の改善',
+    changes: ['更新パッケージのダウンロード率をプログレスバーで表示', '進捗率をバー中央にパーセント表示', '一時的な進捗ストリーム切断メッセージを非表示化'],
+  },
+  {
     version: '0.4.4',
     title: '自動更新の完全サイレント化',
     changes: ['自動更新ボタンからのインストールではセットアップ操作を一切不要化', '更新完了後に更新済みアプリを自動で再起動'],
@@ -56,11 +61,26 @@ export const RELEASES = [
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.4.4'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.4.5'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
-      {updateState?.status === 'downloading' && <p>ダウンロード中… {updateState.percent}%</p>}
+      {updateState?.status === 'downloading' && (
+        <div className="update-download">
+          <p>更新パッケージをダウンロード中…</p>
+          <div
+            className="progress update-download__progress"
+            role="progressbar"
+            aria-label="更新パッケージのダウンロード進捗"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={updateState.percent}
+          >
+            <div className="progress__bar" style={{ width: `${updateState.percent}%` }} />
+            <span className="progress__label">{updateState.percent}%</span>
+          </div>
+        </div>
+      )}
       {updateState?.status === 'downloaded' && <p className="inline-msg inline-msg--ok">v{updateState.version} の準備ができました。</p>}
       {updateState?.status === 'installing' && <p className="inline-msg inline-msg--ok">v{updateState.version} をバックグラウンドでインストールしています。完了後に再起動します。</p>}
       {updateState?.status === 'error' && <p className="inline-msg inline-msg--error">{updateState.message}</p>}
@@ -82,7 +102,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.4.4'}</p>
+        <p className="version-number">Version {version ?? '0.4.5'}</p>
         <p>Developer: ninjin</p>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>

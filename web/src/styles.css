@@ -238,6 +238,10 @@ code {
 .version-number { font-weight: 700; }
 .release-list { display: grid; gap: 1rem; margin-top: 1.25rem; }
 .update-box { margin-top: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
+.update-download { margin: 1rem 0; }
+.update-download p { margin: 0 0 .55rem; }
+.update-download__progress { background: var(--surface); }
+.update-download__progress .progress__label { color: var(--fg); text-shadow: 0 1px 2px var(--surface); }
 .release-card { padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
 .release-card h3 { margin: .55rem 0; }
 .release-card ul { margin-bottom: 0; padding-left: 1.25rem; }

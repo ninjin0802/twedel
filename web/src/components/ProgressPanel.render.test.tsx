@@ -85,15 +85,13 @@ describe('ProgressView - live run', () => {
   });
 
   it('keeps the run visible with 中断 when a transient error arrives after progress', () => {
-    // The transient SSE-drop case: state stays running, the error is surfaced,
-    // and the run does NOT flip to the gone/閉じる view.
+    // The run does not flip to the gone/閉じる view while reconnecting.
     const html = view({
       state: 'running',
       progress: progressEvent('running'),
-      connError: '進捗ストリームが切断されました',
     });
     expect(html).toContain('中断');
-    expect(html).toContain('進捗ストリームが切断されました');
+    expect(html).not.toContain('進捗ストリームが切断されました');
     expect(html).not.toContain(GONE_MESSAGE);
   });
 

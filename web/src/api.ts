@@ -320,7 +320,8 @@ export function subscribe<T>(
   source.onmessage = handle;
   source.onerror = () => {
     if (closed) return;
-    onError?.(new Error('進捗ストリームが切断されました'));
+    // EventSource reconnects automatically. A brief transport interruption is
+    // expected and should not be presented as an application error.
   };
 
   return () => {
