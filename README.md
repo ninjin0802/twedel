@@ -4,6 +4,12 @@
 開発時は `npm run dev`、デスクトップ版の確認は `npm run desktop`、Windowsインストーラーの作成は `npm run dist:win` を使います。v0.2.0 以降は保存済みセッションがない場合、起動時に専用 Chrome を自動で開いて認証情報を取得します。
 認証情報と中断時の一時チェックポイントはこのマシンだけに置かれ、外部に出る通信は x.com 宛てのものだけです。
 
+## Windows版をダウンロード
+
+[最新版のインストーラーをダウンロード](https://github.com/ninjin0802/twedel/releases/latest)
+
+Releaseページの `twedel-Setup-*.exe` をダウンロードして実行してください。
+
 ---
 
 ## ⚠️ 先に読んでください
