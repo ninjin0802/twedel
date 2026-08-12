@@ -49,13 +49,20 @@ function publishUpdateState(next) {
 function configureUpdater() {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.autoRunAppAfterInstall = true;
   autoUpdater.on('checking-for-update', () => publishUpdateState({ status: 'checking' }));
   autoUpdater.on('update-available', (info) => publishUpdateState({ status: 'available', version: info.version }));
   autoUpdater.on('update-not-available', () => publishUpdateState({ status: 'latest' }));
   autoUpdater.on('download-progress', (p) => publishUpdateState({ status: 'downloading', percent: Math.round(p.percent) }));
-  autoUpdater.on('update-downloaded', (info) => {
-    void rememberDownloadedUpdate(info).catch(() => undefined);
-    publishUpdateState({ status: 'downloaded', version: info.version });
+  autoUpdater.on('update-downloaded', async (info) => {
+    try {
+      await rememberDownloadedUpdate(info);
+      publishUpdateState({ status: 'installing', version: info.version });
+      // Run NSIS silently in the background, then relaunch the updated app.
+      setImmediate(() => autoUpdater.quitAndInstall(true, true));
+    } catch (error) {
+      publishUpdateState({ status: 'error', message: error instanceof Error ? error.message : String(error) });
+    }
   });
   autoUpdater.on('error', (error) => publishUpdateState({ status: 'error', message: error.message }));
   ipcMain.handle('update:get-state', () => updateState);

@@ -277,7 +277,7 @@ export function App() {
           </div>
         </div>
         <div className="app__status">
-          <span className="app-version">v{version ?? '0.4.2'}</span>
+          <span className="app-version">v{version ?? '0.4.3'}</span>
         </div>
       </header>
 

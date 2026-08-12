@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.4.3',
+    title: 'バックグラウンド自動インストール',
+    changes: ['更新のダウンロード完了後にインストーラーをバックグラウンドで自動実行', 'インストール完了後に更新済みアプリを自動で再起動'],
+  },
+  {
     version: '0.4.2',
     title: '更新キャッシュのクリーンアップ',
     changes: ['更新成功後の初回起動でダウンロード済みインストーラーを自動削除', 'アプリアイコンを新しいデザインへ刷新'],
@@ -46,16 +51,17 @@ export const RELEASES = [
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.4.2'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.4.3'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
       {updateState?.status === 'downloading' && <p>ダウンロード中… {updateState.percent}%</p>}
       {updateState?.status === 'downloaded' && <p className="inline-msg inline-msg--ok">v{updateState.version} の準備ができました。</p>}
+      {updateState?.status === 'installing' && <p className="inline-msg inline-msg--ok">v{updateState.version} をバックグラウンドでインストールしています。完了後に再起動します。</p>}
       {updateState?.status === 'error' && <p className="inline-msg inline-msg--error">{updateState.message}</p>}
       <div className="row row--tight">
         <button className="btn" onClick={onCheck} disabled={updateState?.status === 'checking' || updateState?.status === 'downloading'}>更新を確認</button>
-        {updateState?.status === 'available' && <button className="btn btn--primary" onClick={onDownload}>ダウンロード</button>}
+        {updateState?.status === 'available' && <button className="btn btn--primary" onClick={onDownload} disabled={updateBlocked}>ダウンロードして自動更新</button>}
         {updateState?.status === 'downloaded' && <button className="btn btn--primary" onClick={onInstall} disabled={updateBlocked}>再起動して更新</button>}
       </div>
       {updateBlocked && <p className="hint">削除処理が終了してから更新できます。</p>}
@@ -71,7 +77,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.4.2'}</p>
+        <p className="version-number">Version {version ?? '0.4.3'}</p>
         <p>Developer: ninjin</p>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>
