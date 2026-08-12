@@ -152,6 +152,10 @@ export function removeAccount(id: string): Promise<{ ok: true }> {
   return request(`/api/accounts/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
+export function resetAccounts(): Promise<{ ok: true }> {
+  return request('/api/accounts/reset', { method: 'POST' });
+}
+
 export function setTransactionId(value: string | null): Promise<{ ok: true; manual: boolean }> {
   return request('/api/session/transaction-id', {
     method: 'POST',

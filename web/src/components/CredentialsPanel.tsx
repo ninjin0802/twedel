@@ -33,6 +33,9 @@ export const DIAGNOSTICS_SAFE_NOTE =
   'この内容に認証情報は含まれません (Cookie・ct0・bearer・レスポンス本文はすべて出ません)。' +
   'そのまま貼り付けて共有できます。';
 
+export const ACCOUNT_REMOVE_NOTE = 'Xのアカウント自体は削除されません。';
+export const ACCOUNT_RESET_LABEL = 'アカウント設定をリセット';
+
 const PLAYWRIGHT_COOKIE_NOTE =
   'playwright モードでは auth_token / ct0 は使いません。専用 Chrome プロファイル ' +
   '(data/pw-profile) のログイン済みセッションがそのまま認証情報になります。';
@@ -243,6 +246,39 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
     }
   }
 
+  async function removeAccount(account: SavedAccount) {
+    if (!window.confirm(`@${account.screenName} をtwedelから削除しますか？\n${ACCOUNT_REMOVE_NOTE}`)) return;
+    setAccountStatus({ kind: 'busy' });
+    try {
+      await api.removeAccount(account.id);
+      if (account.active) {
+        autoHarvestStarted.current = true;
+        onSession(null);
+      }
+      await refreshAccounts();
+      setAccountStatus({ kind: 'ok', text: `@${account.screenName} をtwedelから削除しました。` });
+    } catch (err) {
+      setAccountStatus({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  async function resetAccounts() {
+    if (!window.confirm(`twedelに保存したすべてのXアカウント情報を削除してリセットしますか？\n${ACCOUNT_REMOVE_NOTE}`)) return;
+    setAccountStatus({ kind: 'busy' });
+    try {
+      await api.resetAccounts();
+      autoHarvestStarted.current = true;
+      onSession(null);
+      setAccounts([]);
+      setAuthToken('');
+      setCt0('');
+      setHarvest({ kind: 'idle' });
+      setAccountStatus({ kind: 'ok', text: 'アカウント設定をリセットしました。' });
+    } catch (err) {
+      setAccountStatus({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
   useEffect(() => {
     if (!shouldAutoHarvest(autoHarvest, session?.connected === true, autoHarvestStarted.current)) return;
     autoHarvestStarted.current = true;
@@ -250,6 +286,7 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
   }, [autoHarvest, session?.connected]);
 
   async function disconnect() {
+    autoHarvestStarted.current = true;
     try {
       await api.deleteSession();
     } catch {
@@ -334,22 +371,23 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
         <div className="account-switcher" aria-label="アカウント切り替え">
           <div className="account-switcher__list">
             {accounts.map((account) => (
-              <button
-                type="button"
-                key={account.id}
-                className={`account-card${account.active ? ' is-active' : ''}`}
-                onClick={() => void switchAccount(account.id)}
-                disabled={account.active || accountStatus.kind === 'busy'}
-              >
-                <span className="account-avatar">{account.screenName.slice(0, 1).toUpperCase()}</span>
-                <span><strong>@{account.screenName}</strong><small>{account.active ? '使用中' : '切り替える'}</small></span>
-              </button>
+              <div key={account.id} className={`account-card${account.active ? ' is-active' : ''}`}>
+                <button type="button" className="account-card__switch" onClick={() => void switchAccount(account.id)} disabled={account.active || accountStatus.kind === 'busy'}>
+                  <span className="account-avatar">{account.screenName.slice(0, 1).toUpperCase()}</span>
+                  <span><strong>@{account.screenName}</strong><small>{account.active ? '使用中' : '切り替える'}</small></span>
+                </button>
+                <button type="button" className="account-card__remove" aria-label={`@${account.screenName}をtwedelから削除`} title="twedelから削除" onClick={() => void removeAccount(account)} disabled={accountStatus.kind === 'busy'}>×</button>
+              </div>
             ))}
           </div>
           <button type="button" className="btn account-add" onClick={() => void harvestFromChrome(true)} disabled={harvest.kind === 'busy'}>
             ＋ 別のアカウントを追加
           </button>
+          <button type="button" className="btn btn--danger account-reset" onClick={() => void resetAccounts()} disabled={accountStatus.kind === 'busy'}>
+            {ACCOUNT_RESET_LABEL}
+          </button>
           <p className="hint">追加時は専用Chromeが開きます。追加したいXアカウントでログインしてください。</p>
+          <p className="hint">削除・リセットはtwedel内の保存情報だけが対象です。{ACCOUNT_REMOVE_NOTE}</p>
         </div>
       )}
 

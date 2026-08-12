@@ -143,7 +143,7 @@ describe('GET /api/health', () => {
   it('answers ok', async () => {
     const res = await get('/api/health');
     expect(res.status).toBe(200);
-    expect(await json(res)).toEqual({ ok: true, version: '0.7.2' });
+    expect(await json(res)).toEqual({ ok: true, version: '0.8.0' });
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     expect(res.headers.get('x-frame-options')).toBe('DENY');
     expect(res.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
@@ -161,6 +161,11 @@ describe('session routes', () => {
     const body = await json<{ accounts: unknown[] }>(await get('/api/accounts'));
     expect(Array.isArray(body.accounts)).toBe(true);
     expect(JSON.stringify(body).toLowerCase()).not.toMatch(/auth_token|authtoken|ct0/);
+  });
+  it('resets saved account information', async () => {
+    const res = await post('/api/accounts/reset');
+    expect(res.status).toBe(200);
+    expect(await json(res)).toEqual({ ok: true });
   });
   it('reports a disconnected session and leaks no credential fields', async () => {
     const res = await get('/api/session');

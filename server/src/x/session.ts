@@ -779,10 +779,24 @@ export async function removeSavedAccount(id: string): Promise<boolean> {
   const accounts = await readAccounts();
   const found = accounts.some((item) => accountId(item) === id);
   if (!found) return false;
-  const active = current?.connected && accountId({ userId: current.userId, screenName: current.screenName }) === id;
+  const stored = await readStored();
+  const activeInMemory = current?.connected && accountId({ userId: current.userId, screenName: current.screenName }) === id;
+  const activeOnDisk = stored?.screenName ? accountId(stored) === id : false;
   await writeAccounts(accounts.filter((item) => accountId(item) !== id));
-  if (active) await clearSession();
+  // Clear session.json too, otherwise getSavedAccounts() would migrate the
+  // supposedly removed active account straight back into accounts.json.
+  if (activeInMemory || activeOnDisk) await clearSession();
   return true;
+}
+
+/** Remove every account credential saved by twedel; never touches the X accounts themselves. */
+export async function resetSavedAccounts(): Promise<void> {
+  await clearSession();
+  try {
+    await unlink(accountsFile());
+  } catch {
+    // Already reset.
+  }
 }
 
 /**

@@ -2,6 +2,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
   CookieFields,
+  ACCOUNT_REMOVE_NOTE,
+  ACCOUNT_RESET_LABEL,
   CredentialsPanel,
   DIAGNOSTICS_SAFE_NOTE,
   HARVEST_HINT,
@@ -151,6 +153,13 @@ describe('CredentialsPanel - harvest and the manual fallback', () => {
     const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} showDetails />);
     expect(html).toContain('DevTools');
     expect(html).toContain('Cookies');
+  });
+});
+
+describe('account removal copy', () => {
+  it('makes clear that reset affects twedel, not the X account itself', () => {
+    expect(ACCOUNT_REMOVE_NOTE).toContain('Xのアカウント自体は削除されません');
+    expect(ACCOUNT_RESET_LABEL).toBe('アカウント設定をリセット');
   });
 });
 

@@ -14,6 +14,8 @@ import {
   getSession,
   getTransport,
   harvestSession,
+  removeSavedAccount,
+  resetSavedAccounts,
   switchSavedAccount,
   setCredentials,
 } from './session.js';
@@ -170,6 +172,21 @@ describe('setCredentials - happy path', () => {
     const switched = await switchSavedAccount('id:1');
     expect(switched).toMatchObject({ connected: true, screenName: 'first', userId: '1' });
     expect((await getSavedAccounts()).find((account) => account.id === 'id:1')?.active).toBe(true);
+  });
+
+  it('removes the active account without migrating it back from session.json', async () => {
+    settingsReply = { status: 200, body: { screen_name: 'owner', id_str: '42' } };
+    await setCredentials(AUTH, CT0, 'cookie');
+    expect(await removeSavedAccount('id:42')).toBe(true);
+    expect(await getSavedAccounts()).toEqual([]);
+    await expect(getSession()).resolves.toEqual({ connected: false, mode: 'cookie' });
+  });
+
+  it('resets every saved account and the current connection', async () => {
+    await setCredentials(AUTH, CT0, 'cookie');
+    await resetSavedAccounts();
+    expect(await getSavedAccounts()).toEqual([]);
+    await expect(getSession()).resolves.toEqual({ connected: false, mode: 'cookie' });
   });
 });
 

@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import type { SessionInfo } from '../../../shared/types.js';
 import { setManualQueryId } from '../x/queryId.js';
 import { getManualTransactionId, setManualTransactionId } from '../x/transactionId.js';
-import { clearSession, getSavedAccounts, getSession, harvestSession, removeSavedAccount, setCredentials, switchSavedAccount } from '../x/session.js';
+import { clearSession, getSavedAccounts, getSession, harvestSession, removeSavedAccount, resetSavedAccounts, setCredentials, switchSavedAccount } from '../x/session.js';
 import { dataDir } from '../x/paths.js';
 import { hasActiveRun } from '../deleteRunner.js';
 import { HttpError, parseBody } from './http.js';
@@ -97,6 +97,12 @@ sessionRouter.delete('/accounts/:id', async (req, res) => {
   if (hasActiveRun()) throw new HttpError(409, '削除の実行中はアカウントを削除できません。');
   const removed = await removeSavedAccount(decodeURIComponent(req.params['id'] ?? ''));
   if (!removed) throw new HttpError(404, '保存済みアカウントが見つかりません。');
+  res.json({ ok: true });
+});
+
+sessionRouter.post('/accounts/reset', async (_req, res) => {
+  if (hasActiveRun()) throw new HttpError(409, '削除の実行中はアカウント設定をリセットできません。');
+  await resetSavedAccounts();
   res.json({ ok: true });
 });
 
