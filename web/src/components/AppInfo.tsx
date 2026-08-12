@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.4.4',
+    title: '自動更新の完全サイレント化',
+    changes: ['自動更新ボタンからのインストールではセットアップ操作を一切不要化', '更新完了後に更新済みアプリを自動で再起動'],
+  },
+  {
     version: '0.4.3',
     title: 'バックグラウンド自動インストール',
     changes: ['更新のダウンロード完了後にインストーラーをバックグラウンドで自動実行', 'インストール完了後に更新済みアプリを自動で再起動'],
@@ -51,7 +56,7 @@ export const RELEASES = [
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.4.3'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.4.4'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -77,7 +82,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.4.3'}</p>
+        <p className="version-number">Version {version ?? '0.4.4'}</p>
         <p>Developer: ninjin</p>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>

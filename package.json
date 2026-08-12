@@ -1,6 +1,6 @@
 {
   "name": "twedel",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "author": "ninjin",
   "private": true,
   "type": "module",
@@ -64,10 +64,12 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "web/public/icon.png"
+      "icon": "web/public/icon.png",
+      "artifactName": "twedel-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true
     },
     "publish": [{

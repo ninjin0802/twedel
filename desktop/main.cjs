@@ -48,7 +48,9 @@ function publishUpdateState(next) {
 
 function configureUpdater() {
   autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
+  // Installation is started explicitly with silent=true after download.
+  // Disable the generic app-quit path so it cannot open the interactive NSIS UI.
+  autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.autoRunAppAfterInstall = true;
   autoUpdater.on('checking-for-update', () => publishUpdateState({ status: 'checking' }));
   autoUpdater.on('update-available', (info) => publishUpdateState({ status: 'available', version: info.version }));
@@ -72,7 +74,7 @@ function configureUpdater() {
     return updateState;
   });
   ipcMain.handle('update:download', async () => { await autoUpdater.downloadUpdate(); return updateState; });
-  ipcMain.handle('update:install', () => autoUpdater.quitAndInstall(false, true));
+  ipcMain.handle('update:install', () => autoUpdater.quitAndInstall(true, true));
 }
 
 async function startBackend() {
