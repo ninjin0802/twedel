@@ -233,6 +233,7 @@ code {
 .app-menu button:hover { background: var(--surface-2); }
 .info-page { max-width: 48rem; margin-inline: auto; }
 .about-mark { width: 4rem; height: 4rem; margin: 2rem auto 1rem; display: grid; place-content: center; border-radius: 1rem; color: var(--accent); background: var(--accent-soft); font-size: 2rem; }
+.about-mark img { width: 4rem; height: 4rem; display: block; border-radius: 1rem; }
 .info-page > h3, .info-page > p { text-align: center; }
 .version-number { font-weight: 700; }
 .release-list { display: grid; gap: 1rem; margin-top: 1.25rem; }
@@ -270,6 +271,7 @@ code {
   gap: 0.75rem;
   flex-wrap: wrap;
 }
+.app__mark img { width: 100%; height: 100%; display: block; border-radius: 8px; }
 .app-version { color: var(--muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
 .update-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;

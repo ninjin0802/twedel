@@ -1,6 +1,6 @@
 {
   "name": "twedel",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": "ninjin",
   "private": true,
   "type": "module",
@@ -63,7 +63,8 @@
       "node_modules/playwright-core/.local-browsers/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "web/public/icon.png"
     },
     "nsis": {
       "oneClick": false,

@@ -1,10 +1,45 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const { join } = require('node:path');
+const { readFile, rm, writeFile } = require('node:fs/promises');
+const { basename, dirname, join, resolve } = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 let mainWindow;
 let updateState = { status: 'idle' };
+
+function cleanupMarkerFile() {
+  return join(app.getPath('userData'), 'update-cleanup.json');
+}
+
+async function rememberDownloadedUpdate(info) {
+  if (!info.downloadedFile) return;
+  await writeFile(cleanupMarkerFile(), JSON.stringify({
+    targetVersion: info.version,
+    downloadedFile: resolve(info.downloadedFile),
+  }), 'utf8');
+}
+
+async function cleanupInstalledUpdate() {
+  let marker;
+  try {
+    marker = JSON.parse(await readFile(cleanupMarkerFile(), 'utf8'));
+  } catch {
+    return;
+  }
+  if (marker?.targetVersion !== app.getVersion() || typeof marker.downloadedFile !== 'string') return;
+
+  // The marker is local state, but still constrain deletion to electron-updater's
+  // own `<app>-updater/pending` directory before removing anything recursively.
+  const pendingDir = dirname(resolve(marker.downloadedFile));
+  const updaterDir = dirname(pendingDir);
+  const localAppData = process.env.LOCALAPPDATA;
+  if (!localAppData) return;
+  const expectedUpdaterDir = resolve(localAppData, 'twedel-updater');
+  if (basename(pendingDir).toLowerCase() !== 'pending' || updaterDir.toLowerCase() !== expectedUpdaterDir.toLowerCase()) return;
+
+  await rm(pendingDir, { recursive: true, force: true });
+  await rm(cleanupMarkerFile(), { force: true });
+}
 
 function publishUpdateState(next) {
   updateState = next;
@@ -18,7 +53,10 @@ function configureUpdater() {
   autoUpdater.on('update-available', (info) => publishUpdateState({ status: 'available', version: info.version }));
   autoUpdater.on('update-not-available', () => publishUpdateState({ status: 'latest' }));
   autoUpdater.on('download-progress', (p) => publishUpdateState({ status: 'downloading', percent: Math.round(p.percent) }));
-  autoUpdater.on('update-downloaded', (info) => publishUpdateState({ status: 'downloaded', version: info.version }));
+  autoUpdater.on('update-downloaded', (info) => {
+    void rememberDownloadedUpdate(info).catch(() => undefined);
+    publishUpdateState({ status: 'downloaded', version: info.version });
+  });
   autoUpdater.on('error', (error) => publishUpdateState({ status: 'error', message: error.message }));
   ipcMain.handle('update:get-state', () => updateState);
   ipcMain.handle('update:check', async () => {
@@ -66,6 +104,7 @@ async function createWindow() {
 
 app.whenReady().then(async () => {
   try {
+    await cleanupInstalledUpdate();
     configureUpdater();
     await startBackend();
     await createWindow();

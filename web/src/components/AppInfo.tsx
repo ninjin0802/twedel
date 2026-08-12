@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.4.2',
+    title: '更新キャッシュのクリーンアップ',
+    changes: ['更新成功後の初回起動でダウンロード済みインストーラーを自動削除', 'アプリアイコンを新しいデザインへ刷新'],
+  },
+  {
     version: '0.4.1',
     title: '更新画面の改善',
     changes: ['アップデート操作をバージョン情報ページへ移動', '起動時に新しいバージョンがある場合はアプリ内へ通知'],
@@ -41,7 +46,7 @@ export const RELEASES = [
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.4.1'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.4.2'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -64,9 +69,9 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
     return (
       <section className="panel info-page">
         <h2>バージョン情報</h2>
-        <div className="about-mark" aria-hidden="true">✂</div>
+        <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.4.1'}</p>
+        <p className="version-number">Version {version ?? '0.4.2'}</p>
         <p>Developer: ninjin</p>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>

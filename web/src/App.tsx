@@ -270,14 +270,14 @@ export function App() {
           <span /> <span /> <span />
         </button>
         <div className="app__brand">
-          <span className="app__mark" aria-hidden="true">✂</span>
+          <span className="app__mark" aria-hidden="true"><img src="/icon.png" alt="" /></span>
           <div>
             <h1>twedel</h1>
             <p className="tagline">自分のツイートを一括削除するローカル専用ツール</p>
           </div>
         </div>
         <div className="app__status">
-          <span className="app-version">v{version ?? '0.4.1'}</span>
+          <span className="app-version">v{version ?? '0.4.2'}</span>
         </div>
       </header>
 
