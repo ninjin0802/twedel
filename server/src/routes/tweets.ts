@@ -27,7 +27,7 @@ export const tweetsRouter = Router();
  * row `isLike` so the run route un-favorites it. Omitting it is exactly the old
  * request.
  */
-const sourceSchema = z.enum(['tweets', 'likes']).default('tweets');
+const sourceSchema = z.enum(['tweets', 'likes', 'all']).default('tweets');
 
 const archiveSchema = z.object({
   path: z.string().min(1, 'an absolute path to the archive .zip or extracted folder is required'),
@@ -48,6 +48,7 @@ const archiveSchema = z.object({
       includeOriginals: z.boolean().default(true),
       includeReplies: z.boolean().default(true),
       includeRetweets: z.boolean().default(true),
+      includeLikes: z.boolean().default(true),
       includeMediaTweets: z.boolean().default(true),
     })
     .optional(),
@@ -76,7 +77,22 @@ tweetsRouter.post('/tweets/archive', async (req, res) => {
 
   let result;
   try {
-    result = await loadArchive(body.path, body.source);
+    if (body.source === 'all') {
+      const [posts, likes] = await Promise.all([
+        loadArchive(body.path, 'tweets'),
+        loadArchive(body.path, 'likes'),
+      ]);
+      const merged = new Map(posts.tweets.map((tweet) => [tweet.id, tweet]));
+      for (const like of likes.tweets) merged.set(like.id, like);
+      result = {
+        tweets: [...merged.values()],
+        filesRead: [...new Set([...posts.filesRead, ...likes.filesRead])],
+        skipped: [...posts.skipped, ...likes.skipped],
+        kind: 'all' as const,
+      };
+    } else {
+      result = await loadArchive(body.path, body.source);
+    }
   } catch (err: unknown) {
     // A wrong path / unreadable zip is user error, not a server fault.
     throw new HttpError(400, err instanceof Error ? err.message : 'Could not read that archive.');
@@ -156,26 +172,35 @@ tweetsRouter.post('/tweets/live', async (req, res) => {
   const screenName = session.screenName;
   // Same job machinery for both; only which fetcher runs differs. Omitting
   // `source` defaults to 'tweets', so the existing contract is unchanged.
-  const fetchFor = body.source === 'likes' ? fetchUserLikes : fetchUserTweets;
   void (async () => {
     try {
       const transport = getTransport();
-      const tweets = await fetchFor({
-        transport,
-        screenName,
-        ...(body.max !== undefined ? { max: body.max } : {}),
-        onProgress: (p) => {
+      const fetchOne = (kind: 'tweets' | 'likes', offset: number) =>
+        (kind === 'likes' ? fetchUserLikes : fetchUserTweets)({
+          transport, screenName,
+          ...(body.max !== undefined ? { max: body.max } : {}),
+          onProgress: (p) => {
           // The terminal frame is published below, after the store is populated,
           // so a client that races to `/result` on `done` never sees a 409.
           if (!p.done) {
             publishJob(job, {
-              fetched: p.fetched,
+              fetched: offset + p.fetched,
               cursorPage: p.cursorPage,
-              ...(p.operation === undefined ? {} : { operation: p.operation }),
+              operation: `${kind === 'likes' ? 'いいね' : 'ポスト'}: ${p.operation ?? '取得中'}`,
             });
           }
-        },
-      });
+          },
+        });
+      let tweets: Tweet[];
+      if (body.source === 'all') {
+        const posts = await fetchOne('tweets', 0);
+        const likes = await fetchOne('likes', posts.length);
+        const merged = new Map(posts.map((tweet) => [tweet.id, tweet]));
+        for (const like of likes) merged.set(like.id, like);
+        tweets = [...merged.values()].sort((a, b) => Date.parse(b.createdAt || '0') - Date.parse(a.createdAt || '0'));
+      } else {
+        tweets = await fetchOne(body.source, 0);
+      }
       job.tweets = tweets;
       setTweets(tweets);
       publishJob(job, { fetched: tweets.length, done: true });

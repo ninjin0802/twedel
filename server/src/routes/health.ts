@@ -3,5 +3,5 @@ import { Router } from 'express';
 export const healthRouter = Router();
 
 healthRouter.get('/health', (_req, res) => {
-  res.json({ ok: true, version: '0.5.2' });
+  res.json({ ok: true, version: '0.6.0' });
 });

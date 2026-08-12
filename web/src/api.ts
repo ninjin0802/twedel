@@ -16,7 +16,7 @@ import type {
 export type SessionResult = SessionInfo & { message?: string };
 
 /** What a source route fetches: the account's own tweets, or its likes. */
-export type FetchSource = 'tweets' | 'likes';
+export type FetchSource = 'tweets' | 'likes' | 'all';
 
 export interface ArchiveResult {
   tweets: Tweet[];
@@ -204,7 +204,7 @@ export function getDiagnostics(): Promise<DiagnosticsPayload> {
 export function loadArchive(path: string, source: FetchSource = 'tweets'): Promise<ArchiveResult> {
   return request('/api/tweets/archive', {
     method: 'POST',
-    body: JSON.stringify(source === 'likes' ? { path, source } : { path }),
+    body: JSON.stringify(source === 'tweets' ? { path } : { path, source }),
   });
 }
 
@@ -212,7 +212,7 @@ export function loadArchive(path: string, source: FetchSource = 'tweets'): Promi
 export function startLiveFetch(max?: number, source: FetchSource = 'tweets'): Promise<{ jobId: string }> {
   const body: { max?: number; source?: FetchSource } = {};
   if (max) body.max = max;
-  if (source === 'likes') body.source = source;
+  if (source !== 'tweets') body.source = source;
   return request('/api/tweets/live', { method: 'POST', body: JSON.stringify(body) });
 }
 

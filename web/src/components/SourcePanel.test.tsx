@@ -13,24 +13,22 @@ function render(): string {
   return renderToStaticMarkup(<SourcePanel tweets={[]} onTweets={noop} />);
 }
 
-describe('SourcePanel - source selector', () => {
-  it('offers a 自分のポスト / いいね selector', () => {
+describe('SourcePanel - unified source', () => {
+  it('shows both posts and likes as one fetch target', () => {
     const html = render();
     expect(html).toContain('自分のポスト');
     expect(html).toContain('いいね');
-    expect(html).toContain('読み込む対象');
+    expect(html).toContain('取得対象');
+    expect(html).not.toContain('type="radio"');
   });
 
-  it('keeps the live fetch as the primary path', () => {
+  it('offers one combined fetch action', () => {
     const html = render();
-    expect(html).toContain('ライブ取得');
+    expect(html).toContain('ポストといいねを取得');
   });
 
-  it('defaults to 自分のポスト (its radio is checked, いいね is not)', () => {
+  it('explains that both sources are fetched sequentially', () => {
     const html = render();
-    // Exactly one checked radio, and it is the tweets one (rendered first).
-    const checkedCount = (html.match(/checked=""|checked>/g) ?? []).length;
-    expect(checkedCount).toBeGreaterThanOrEqual(1);
-    expect(html.indexOf('自分のポスト')).toBeLessThan(html.indexOf('いいね'));
+    expect(html).toContain('いいねした投稿も続けて取得');
   });
 });

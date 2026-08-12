@@ -311,6 +311,13 @@ describe('applyFilter', () => {
     expect(DEFAULT_CRITERIA.includeRetweets).toBe(true);
     expect(applyFilter(tweets, DEFAULT_CRITERIA).map((t) => t.id)).toEqual(['a', 'rt']);
   });
+
+  it('includes likes by default and lets the likes checkbox exclude them', () => {
+    const liked = tweet({ id: 'liked', isLike: true });
+    expect(DEFAULT_CRITERIA.includeLikes).toBe(true);
+    expect(applyFilter([liked], DEFAULT_CRITERIA)).toEqual([liked]);
+    expect(applyFilter([liked], { ...DEFAULT_CRITERIA, includeLikes: false })).toEqual([]);
+  });
 });
 
 describe('summarize', () => {

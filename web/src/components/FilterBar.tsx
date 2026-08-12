@@ -142,6 +142,14 @@ export function FilterBar({ criteria, onChange, countsReliable, errors = [] }: P
           />
           リポスト
         </label>
+        <label className="check check--like">
+          <input
+            type="checkbox"
+            checked={criteria.includeLikes !== false}
+            onChange={(e) => patch({ includeLikes: e.target.checked })}
+          />
+          いいね
+        </label>
         <label className="check">
           <input
             type="checkbox"

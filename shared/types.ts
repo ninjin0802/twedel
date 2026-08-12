@@ -49,6 +49,8 @@ export interface FilterCriteria {
   includeOriginals: boolean;
   includeReplies: boolean;
   includeRetweets: boolean;
+  /** when false, liked posts are excluded */
+  includeLikes?: boolean;
   /** when false, tweets with media are excluded */
   includeMediaTweets: boolean;
 }

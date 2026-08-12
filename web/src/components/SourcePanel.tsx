@@ -18,8 +18,6 @@ function fmtDate(iso: string | null): string {
 export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
   const [path, setPath] = useState('');
   const [max, setMax] = useState('');
-  /** What to fetch: the account's own tweets (default) or its likes to un-favorite. */
-  const [source, setSource] = useState<api.FetchSource>('tweets');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filesRead, setFilesRead] = useState<string[]>([]);
@@ -38,7 +36,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
     setError(null);
     setFetched(null);
     try {
-      const result = await api.loadArchive(path.trim(), source);
+      const result = await api.loadArchive(path.trim(), 'all');
       setFilesRead(result.filesRead ?? []);
       setSkipped(result.skipped ?? []);
       onTweets(result.tweets ?? []);
@@ -59,7 +57,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
       const parsed = Number.parseInt(max, 10);
       const { jobId } = await api.startLiveFetch(
         Number.isFinite(parsed) && parsed > 0 ? parsed : undefined,
-        source,
+        'all',
       );
 
       await new Promise<void>((resolve, reject) => {
@@ -103,37 +101,15 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
   }
 
   const stats = summarize(tweets);
-  const isLikes = source === 'likes';
-
   return (
-    <section className="panel">
+    <section className="panel source-panel source-panel--unified">
       <header className="panel__head">
-        <h2>取得</h2>
+        <div><h2>まとめて取得</h2><p className="panel__subtitle">自分のポストといいねを一度に読み込みます</p></div>
       </header>
-
-      {/* What to fetch: the account's own tweets, or its likes to un-favorite.
-          Applies to BOTH the live fetch and the archive import below. */}
-      <div className="row row--tight" role="radiogroup" aria-label="読み込む対象">
-        <label className="field field--inline">
-          <input
-            type="radio"
-            name="source"
-            checked={!isLikes}
-            disabled={busy}
-            onChange={() => setSource('tweets')}
-          />
-          <span>自分のポスト</span>
-        </label>
-        <label className="field field--inline">
-          <input
-            type="radio"
-            name="source"
-            checked={isLikes}
-            disabled={busy}
-            onChange={() => setSource('likes')}
-          />
-          <span>いいね</span>
-        </label>
+      <div className="source-kinds" aria-label="取得対象">
+        <span><b>投稿</b><small>通常ポスト・返信・リポスト</small></span>
+        <span className="source-kinds__plus">＋</span>
+        <span><b>いいね</b><small>いいね解除できる投稿</small></span>
       </div>
 
       {/* Primary path: fetch live from X via the saved session. */}
@@ -149,16 +125,12 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
           />
         </label>
         <button type="button" className="btn btn--primary" onClick={loadLive} disabled={busy || !connected}>
-          {busy ? '取得中…' : isLikes ? 'いいねを取得' : 'ライブ取得'}
+          {busy ? 'まとめて取得中…' : 'ポストといいねを取得'}
         </button>
         {busy && fetched !== null && <span className="live-count">取得中… {fetched}件</span>}
       </div>
       {!connected && <p className="inline-msg inline-msg--waiting">Xへの接続が完了すると取得できます。</p>}
-      <p className="hint">
-        {isLikes
-          ? 'X の API からいいねした投稿を直接取得します。これらは「削除」ではなくいいね解除の対象です（①で認証が必要です）。'
-          : 'X の API から最新のポストを直接取得します（①で認証が必要です）。'}
-      </p>
+      <p className="hint">Xから自分のポストを取得したあと、いいねした投稿も続けて取得します。取得件数はそれぞれに適用されます。</p>
 
       {/* Archive import + sample data: secondary, tucked away but fully functional. */}
       <details className="disclosure">
@@ -180,9 +152,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
         </div>
         <p className="hint">
           X からダウンロードした ZIP か展開済みフォルダを指定します。
-          {isLikes
-            ? '「いいね」を選択中は data/like.js を読み込みます。アーカイブのいいねには日時が記録されないため、期間では絞り込めません。'
-            : '全期間のポストを扱える唯一の方法ですが、いいね／リポスト数は 0 で記録されるため、その2つでは絞り込めません。'}
+          ポストといいねの両方を読み込みます。アーカイブのいいねには日時がなく、反応数も正確ではないため、一部の絞り込みは利用できません。
         </p>
         <p className="hint">
           バックエンド未接続でも画面を確認できます:{' '}
@@ -214,15 +184,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
       {tweets.length > 0 && (
         <p className="summary">
           合計 <b>{stats.total.toLocaleString()}</b> 件
-          {stats.likes > 0 ? (
-            <> / いいね {stats.likes.toLocaleString()}</>
-          ) : (
-            <>
-              {' '}
-              / 通常ポスト {stats.originals.toLocaleString()} ・ 返信 {stats.replies.toLocaleString()} ・ リポスト{' '}
-              {stats.retweets.toLocaleString()}
-            </>
-          )}{' '}
+          {' '}/ 通常ポスト {stats.originals.toLocaleString()} ・ 返信 {stats.replies.toLocaleString()} ・ リポスト {stats.retweets.toLocaleString()} ・ いいね {stats.likes.toLocaleString()}{' '}
           / {fmtDate(stats.oldest)} 〜 {fmtDate(stats.newest)}
         </p>
       )}

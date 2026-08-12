@@ -21,6 +21,7 @@ export const DEFAULT_CRITERIA: FilterCriteria = {
   includeOriginals: true,
   includeReplies: true,
   includeRetweets: true,
+  includeLikes: true,
   includeMediaTweets: true,
 };
 
@@ -113,6 +114,7 @@ function matches(tweet: Tweet, criteria: FilterCriteria, from: number | null, to
   // 1. category gate — exactly one applies. A like is its own category and the
   //    原文/リプライ/RT toggles never gate it (they describe the account's posts).
   const category = categoryOf(tweet);
+  if (category === 'like' && !criteria.includeLikes) return false;
   if (category === 'retweet' && !criteria.includeRetweets) return false;
   if (category === 'reply' && !criteria.includeReplies) return false;
   if (category === 'original' && !criteria.includeOriginals) return false;

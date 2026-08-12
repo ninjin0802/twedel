@@ -52,7 +52,7 @@ function dayBoundMs(value: string | undefined, label: 'from' | 'to', endOfDay: b
 function categoryAllowed(t: Tweet, c: FilterCriteria): boolean {
   // A like is its own thing: the 原文/リプライ/RT toggles describe the account's
   // OWN posts, none of which a like is, so those switches never gate it.
-  if (t.isLike) return true;
+  if (t.isLike) return c.includeLikes !== false;
   // Exactly one category per tweet: retweet > reply > original.
   if (t.isRetweet) return c.includeRetweets;
   if (t.isReply) return c.includeReplies;
