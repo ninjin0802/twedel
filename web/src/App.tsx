@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { FilterCriteria, ProgressEvent, SessionInfo, Tweet } from '@shared/types';
 import * as api from './api';
 import { CredentialsPanel } from './components/CredentialsPanel';
@@ -14,8 +14,36 @@ import { updates, type UpdateState } from './update';
 
 type Health = 'checking' | 'online' | 'offline';
 type Page = 'main' | 'settings' | 'updates' | 'about';
+export type ThemeMode = 'system' | 'light' | 'dark';
 
 const RUN_KEY = 'twedel.runId';
+const THEME_KEY = 'twedel.theme';
+
+export function normalizeTheme(value: string | null): ThemeMode {
+  return value === 'light' || value === 'dark' ? value : 'system';
+}
+
+export function workflowActiveStep(done: readonly boolean[]): number {
+  const firstIncomplete = done.findIndex((value) => !value);
+  return firstIncomplete === -1 ? Math.max(0, done.length - 1) : firstIncomplete;
+}
+
+const PAGE_TITLES: Record<Page, { title: string; description: string }> = {
+  main: { title: 'ホーム', description: 'ポストを取得して、安全に整理しましょう' },
+  settings: { title: '詳細設定', description: '接続方法と高度なオプション' },
+  updates: { title: 'アップデート内容', description: '新機能と改善の履歴' },
+  about: { title: 'バージョン情報', description: 'アプリ情報と更新の確認' },
+};
+
+function NavIcon({ name }: { name: Page }) {
+  const paths: Record<Page, ReactNode> = {
+    main: <><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10M9 20v-6h6v6"/></>,
+    settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.86 2.86-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.1H9.5V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.86-2.86.06-.06A1.7 1.7 0 0 0 4 15a1.7 1.7 0 0 0-1.6-1H2.3V10h.1A1.7 1.7 0 0 0 4 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06L6.46 4.2l.06.06A1.7 1.7 0 0 0 8.4 4 1.7 1.7 0 0 0 9.5 2.4v-.1h4.1v.1A1.7 1.7 0 0 0 14.6 4a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.86 2.86-.06.06A1.7 1.7 0 0 0 19 8.4a1.7 1.7 0 0 0 1.6 1h.1v4.1h-.1a1.7 1.7 0 0 0-1.2 1.5Z"/></>,
+    updates: <><path d="M20 12a8 8 0 1 1-2.34-5.66L20 8.68"/><path d="M20 4v4.68h-4.68"/><path d="M12 7v5l3 2"/></>,
+    about: <><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></>,
+  };
+  return <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+}
 
 export interface DeleteGate {
   selectedCount: number;
@@ -54,6 +82,12 @@ export function App() {
   const [page, setPage] = useState<Page>('main');
   const [menuOpen, setMenuOpen] = useState(false);
   const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle' });
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    try {
+      const saved = window.localStorage.getItem(THEME_KEY);
+      return normalizeTheme(saved);
+    } catch { return 'system'; }
+  });
 
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [criteria, setCriteria] = useState<FilterCriteria>(DEFAULT_CRITERIA);
@@ -134,6 +168,18 @@ export function App() {
       /* private mode / storage disabled — reconnect just won't survive a reload */
     }
   }, [runId]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try { window.localStorage.setItem(THEME_KEY, theme); } catch {}
+  }, [theme]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!updates) return;
@@ -257,8 +303,42 @@ export function App() {
     setMenuOpen(false);
   };
 
+  const steps = [
+    { label: '接続', done: session?.connected === true },
+    { label: '取得', done: tweets.length > 0 },
+    { label: '絞り込み', done: tweets.length > 0 && criteriaValid },
+    { label: '選択・削除', done: selectedTweets.length > 0 || runInProgress },
+  ];
+  const activeStep = workflowActiveStep(steps.map((step) => step.done));
+  const currentPage = PAGE_TITLES[page];
+
   return (
-    <div className="app">
+    <div className="app-shell">
+      {menuOpen && <button className="menu-backdrop" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)} />}
+      <aside className={`app-sidebar${menuOpen ? ' app-sidebar--open' : ''}`} aria-label="メインメニュー">
+        <div className="sidebar-brand">
+          <span className="app__mark" aria-hidden="true"><img src="/icon.png" alt="" /></span>
+          <div><strong>twedel</strong><small>Post cleaner</small></div>
+        </div>
+        <nav className="sidebar-nav">
+          {(Object.keys(PAGE_TITLES) as Page[]).map((item) => (
+            <button key={item} className={page === item ? 'is-active' : ''} aria-current={page === item ? 'page' : undefined} onClick={() => navigate(item)}>
+              <NavIcon name={item} /><span>{PAGE_TITLES[item].title}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-footer">
+          <label className="theme-control">
+            <span>テーマ</span>
+            <select value={theme} onChange={(event) => setTheme(event.target.value as ThemeMode)} aria-label="表示テーマ">
+              <option value="system">システム</option><option value="light">ライト</option><option value="dark">ダーク</option>
+            </select>
+          </label>
+          <span className="sidebar-version">Version {version ?? '0.5.0'}</span>
+        </div>
+      </aside>
+
+      <main className="app-main">
       <header className="app__head">
         <button
           type="button"
@@ -269,17 +349,17 @@ export function App() {
         >
           <span /> <span /> <span />
         </button>
-        <div className="app__brand">
-          <span className="app__mark" aria-hidden="true"><img src="/icon.png" alt="" /></span>
-          <div>
-            <h1>twedel</h1>
-            <p className="tagline">自分のポストを一括削除するローカル専用ツール</p>
-          </div>
+        <div className="page-heading">
+          <h1>{currentPage.title}</h1>
+          <p>{currentPage.description}</p>
         </div>
         <div className="app__status">
-          <span className="app-version">v{version ?? '0.4.9'}</span>
+          <span className={`connection-dot connection-dot--${health}`} aria-hidden="true" />
+          <span>{health === 'online' ? 'ローカル接続済み' : health === 'checking' ? '確認中' : '未接続'}</span>
         </div>
       </header>
+
+      <div className="app-content">
 
       {(updateState.status === 'available' || updateState.status === 'downloaded') && (
         <div className="update-banner" role="status">
@@ -294,19 +374,6 @@ export function App() {
         </div>
       )}
 
-      {menuOpen && (
-        <>
-          <button className="menu-backdrop" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)} />
-          <nav className="app-menu" aria-label="メインメニュー">
-            <div className="app-menu__title">メニュー</div>
-            <button onClick={() => navigate('main')}>ホーム</button>
-            <button onClick={() => navigate('settings')}>詳細設定</button>
-            <button onClick={() => navigate('updates')}>アップデート内容</button>
-            <button onClick={() => navigate('about')}>バージョン情報</button>
-          </nav>
-        </>
-      )}
-
       {health === 'offline' && (
         <p className="inline-msg inline-msg--warn">
           バックエンド (http://127.0.0.1:5174) に接続できません。<code>npm run dev</code> で起動して
@@ -315,6 +382,9 @@ export function App() {
       )}
 
       {page === 'main' && <>
+      <ol className="workflow" aria-label="削除までの手順">
+        {steps.map((step, index) => <li key={step.label} className={`${step.done ? 'is-done' : ''}${index === activeStep ? ' is-active' : ''}`}><span>{step.done ? '✓' : index + 1}</span><strong>{step.label}</strong></li>)}
+      </ol>
       <ResumeBanner runs={resumable} onResumed={handleResumed} onDiscarded={handleDiscarded} />
 
       <CredentialsPanel
@@ -411,6 +481,8 @@ export function App() {
         onDownload={() => void updates?.download()}
         onInstall={() => { if (!runInProgress) void updates?.install(); }}
       />}
+      </div>
+      </main>
     </div>
   );
 }

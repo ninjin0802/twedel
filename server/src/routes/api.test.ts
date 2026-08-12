@@ -131,7 +131,7 @@ describe('GET /api/health', () => {
   it('answers ok', async () => {
     const res = await get('/api/health');
     expect(res.status).toBe(200);
-    expect(await json(res)).toEqual({ ok: true, version: '0.4.9' });
+    expect(await json(res)).toEqual({ ok: true, version: '0.5.0' });
   });
 });
 

@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { deleteButtonState } from './App';
+import { deleteButtonState, normalizeTheme, workflowActiveStep } from './App';
+
+describe('modern workspace state', () => {
+  it('accepts explicit themes and falls back to the system theme', () => {
+    expect(normalizeTheme('light')).toBe('light');
+    expect(normalizeTheme('dark')).toBe('dark');
+    expect(normalizeTheme('unexpected')).toBe('system');
+    expect(normalizeTheme(null)).toBe('system');
+  });
+
+  it('selects the first unfinished workflow step and keeps the final step active when complete', () => {
+    expect(workflowActiveStep([false, false, false, false])).toBe(0);
+    expect(workflowActiveStep([true, true, false, false])).toBe(2);
+    expect(workflowActiveStep([true, true, true, true])).toBe(3);
+  });
+});
 
 /**
  * The delete button used to be gated on `runId !== null`, which meant a stale
