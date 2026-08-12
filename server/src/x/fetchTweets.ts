@@ -367,6 +367,11 @@ export function collectTweetNodes(body: unknown): Rec[] {
   return out;
 }
 
+/** X occasionally serves the user-recommendation module at a tweet endpoint. */
+export function isUserRecommendationTimeline(body: unknown): boolean {
+  return deepFind(body, (node) => node['__typename'] === 'TimelineUser') !== null;
+}
+
 /** The `cursor-bottom-*` value that fetches the next (older) page. */
 export function findBottomCursor(body: unknown): string | null {
   let cursor: string | null = null;
@@ -570,6 +575,7 @@ async function runTimelineOperation(
   // dedicated repost operation even started.
   let operationPages = 0;
   let consecutiveEmptyPages = 0;
+  let shapeRefreshAttempted = false;
 
   while (operationPages < MAX_PAGES) {
     if (signal?.aborted) return null;
@@ -617,11 +623,35 @@ async function runTimelineOperation(
       );
     }
 
+
+    let collectedNodes = collectTweetNodes(res.body);
+    // A successful GraphQL response can still be the wrong product surface:
+    // observed live, X returned TimelineUser recommendation cards and cursors
+    // for UserOriginalsTimeline. Refresh the operation id and retry once; never
+    // accept or cache that response as a working tweet source.
+    if (
+      collectedNodes.length === 0 &&
+      isUserRecommendationTimeline(res.body) &&
+      !shapeRefreshAttempted
+    ) {
+      shapeRefreshAttempted = true;
+      try {
+        queryId = await resolveQueryId(spec.operation, transport, { force: true });
+      } catch {
+        // The ordinary bounded-empty handling below will move to the next source.
+      }
+      cursor = null;
+      seenCursors.clear();
+      operationPages = 0;
+      consecutiveEmptyPages = 0;
+      continue;
+    }
+
     run.page += 1;
     operationPages += 1;
 
     let added = 0;
-    for (const node of collectTweetNodes(res.body)) {
+    for (const node of collectedNodes) {
       // Timelines interleave other accounts' posts (conversation context,
       // "who to follow", pinned replies). Only ours are ours to delete - EXCEPT
       // on the likes timeline, where every row is deliberately someone else's.
@@ -718,6 +748,7 @@ export async function fetchUserTweets(opts: FetchTweetsOptions): Promise<Tweet[]
 
   const refusals: Refusal[] = [];
   let used: string | null = null;
+  let anyCandidateAnswered = false;
 
   for (const candidate of candidateOrder()) {
     if (signal?.aborted) break;
@@ -726,6 +757,7 @@ export async function fetchUserTweets(opts: FetchTweetsOptions): Promise<Tweet[]
     // split family is still worth using if two of its three answer, and a
     // partial timeline beats no timeline for something the user then filters.
     let answered = false;
+    const sizeBeforeCandidate = byId.size;
     for (const spec of candidate.ops) {
       const refusal = await runTimelineOperation(run, spec, candidate.label);
       if (refusal) refusals.push(refusal);
@@ -734,7 +766,11 @@ export async function fetchUserTweets(opts: FetchTweetsOptions): Promise<Tweet[]
       if (max !== undefined && byId.size >= max) break;
     }
 
-    if (answered) {
+    if (answered) anyCandidateAnswered = true;
+    // X sometimes answers 200 for an operation it no longer populates for the
+    // account. Zero usable rows must not pin that dead source and prevent a
+    // later candidate from returning the real timeline.
+    if (answered && byId.size > sizeBeforeCandidate) {
       used = candidate.label;
       // Remember it so the next run does not re-probe the dead ones.
       workingCandidate = candidate.label;
@@ -742,7 +778,7 @@ export async function fetchUserTweets(opts: FetchTweetsOptions): Promise<Tweet[]
     }
   }
 
-  if (used === null && refusals.length > 0) throw allRefusedError(refusals);
+  if (used === null && !anyCandidateAnswered && refusals.length > 0) throw allRefusedError(refusals);
 
   const tweets = [...byId.values()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   const result = max !== undefined ? tweets.slice(0, max) : tweets;

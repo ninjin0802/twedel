@@ -8,6 +8,7 @@ import type { FetchProgress } from './fetchTweets.js';
 import {
   fetchUserLikes,
   fetchUserTweets,
+  isUserRecommendationTimeline,
   normalizeTweet,
   parseTwitterDate,
   resetTimelineSource,
@@ -222,6 +223,10 @@ describe('parseTwitterDate', () => {
 });
 
 describe('fetchUserTweets', () => {
+  it('recognizes a user-recommendation response as the wrong timeline shape', () => {
+    expect(isUserRecommendationTimeline({ data: { item: { __typename: 'TimelineUser' } } })).toBe(true);
+    expect(isUserRecommendationTimeline(timeline([entry({ id: 'tweet-1' })]))).toBe(false);
+  });
   it('pages through two cursors and returns every tweet', async () => {
     pages[''] = {
       body: timeline([entry({ id: '11' }), entry({ id: '12' }), cursorEntry('PAGE2')]),
@@ -340,7 +345,12 @@ describe('fetchUserTweets', () => {
 
     const tweets = await fetchUserTweets({ transport, screenName: 'me', pacing: NO_PACING });
     expect(tweets).toEqual([]);
-    expect(requestedCursors).toEqual(['', 'E1', 'E2', 'E3', 'E4']);
+    // Five candidate operations are tried; each is independently bounded to
+    // five empty pages instead of any one of them running forever.
+    expect(requestedCursors).toHaveLength(25);
+    for (let offset = 0; offset < 25; offset += 5) {
+      expect(requestedCursors.slice(offset, offset + 5)).toEqual(['', 'E1', 'E2', 'E3', 'E4']);
+    }
   });
 
   it("filters out other users' tweets that the timeline interleaves", async () => {
@@ -723,7 +733,26 @@ describe('the timeline candidate chain', () => {
     const tweets = await fetchUserTweets({ transport, screenName: 'me', pacing: NO_PACING });
 
     expect(tweets).toEqual([]);
-    expect(requestedOperations).toEqual(['UserTweetsAndReplies']);
+    expect(requestedOperations).toEqual([
+      'UserTweetsAndReplies',
+      'UserOriginalsTimeline',
+      'UserRepliesTimeline',
+      'UserRepostsTimeline',
+      'UserTweets',
+    ]);
+    expect(timelineSourceInUse()).toBeNull();
+  });
+
+  it('uses a later candidate when split operations answer 200 but contain zero rows', async () => {
+    behaviour['UserTweetsAndReplies'] = { status: 404 };
+    behaviour['UserOriginalsTimeline'] = { pages: { '': { body: timeline([]) } } };
+    behaviour['UserRepliesTimeline'] = { pages: { '': { body: timeline([]) } } };
+    behaviour['UserRepostsTimeline'] = { pages: { '': { body: timeline([]) } } };
+    behaviour['UserTweets'] = { pages: { '': { body: timeline([entry({ id: 'fallback-1' })]) } } };
+
+    const tweets = await fetchUserTweets({ transport, screenName: 'me', pacing: NO_PACING });
+    expect(tweets.map((tweet) => tweet.id)).toEqual(['fallback-1']);
+    expect(timelineSourceInUse()).toBe('UserTweets');
   });
 });
 

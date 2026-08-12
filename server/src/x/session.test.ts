@@ -169,9 +169,19 @@ describe('setCredentials - happy path', () => {
     expect(JSON.stringify(accounts)).not.toContain(AUTH);
     expect(JSON.stringify(accounts)).not.toContain(CT0);
 
+    settingsReply = { status: 200, body: { screen_name: 'first', id_str: '1' } };
     const switched = await switchSavedAccount('id:1');
     expect(switched).toMatchObject({ connected: true, screenName: 'first', userId: '1' });
     expect((await getSavedAccounts()).find((account) => account.id === 'id:1')?.active).toBe(true);
+  });
+
+  it('refuses a saved label whose cookies resolve to a different account', async () => {
+    settingsReply = { status: 200, body: { screen_name: 'first', id_str: '1' } };
+    await setCredentials(AUTH, CT0, 'cookie');
+    settingsReply = { status: 200, body: { screen_name: 'different', id_str: '999' } };
+    const switched = await switchSavedAccount('id:1');
+    expect(switched).toMatchObject({ connected: false, mode: 'cookie' });
+    expect(switched?.message).toMatch(/一致しません/);
   });
 
   it('removes the active account without migrating it back from session.json', async () => {

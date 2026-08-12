@@ -238,6 +238,10 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
     setAccountStatus({ kind: 'busy' });
     try {
       const result = await api.switchAccount(id);
+      if (!result.connected) {
+        setAccountStatus({ kind: 'error', text: result.message ?? 'アカウントを確認できませんでした。' });
+        return;
+      }
       onSession(result);
       await refreshAccounts();
       setAccountStatus({ kind: 'ok', text: `@${result.screenName ?? '?'} に切り替えました。` });

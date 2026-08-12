@@ -765,13 +765,39 @@ export async function getSavedAccounts(): Promise<SavedAccount[]> {
 export async function switchSavedAccount(id: string): Promise<SessionResult | null> {
   const account = (await readAccounts()).find((item) => accountId(item) === id);
   if (!account) return null;
+  const candidate = createCookieTransport({ authToken: account.authToken, ct0: account.ct0 });
+  const outcome = await identify(candidate);
+  if (outcome.kind !== 'identity') {
+    await candidate.close();
+    return {
+      connected: false,
+      mode: 'cookie',
+      message: outcome.kind === 'rejected'
+        ? '保存済みCookieがXに拒否されました。このアカウントを削除して、もう一度追加してください。'
+        : '保存済みCookieのアカウントをXで確認できませんでした。再追加してください。',
+    };
+  }
+  const verified = outcome.identity;
+  const sameIdentity = account.userId && verified.userId
+    ? account.userId === verified.userId
+    : account.screenName?.toLowerCase() === verified.screenName.toLowerCase();
+  if (!sameIdentity) {
+    await candidate.close();
+    return {
+      connected: false,
+      mode: 'cookie',
+      message: `保存表示 @${account.screenName ?? '?'} と、Cookieが示す @${verified.screenName} が一致しません。誤操作防止のため切り替えを中止しました。対象を削除して再追加してください。`,
+    };
+  }
   if (transport) await transport.close();
-  transport = createCookieTransport({ authToken: account.authToken, ct0: account.ct0 });
+  transport = candidate;
   secrets = { authToken: account.authToken, ct0: account.ct0 };
-  current = { connected: true, mode: 'cookie', screenName: account.screenName, userId: account.userId };
+  current = { connected: true, mode: 'cookie', screenName: verified.screenName, userId: verified.userId ?? account.userId };
   clearManualQueryIds();
   resetTimelineSource();
-  await persist({ ...account, savedAt: new Date().toISOString() });
+  const refreshed = { ...account, screenName: verified.screenName, userId: verified.userId ?? account.userId, savedAt: new Date().toISOString() };
+  await persist(refreshed);
+  await saveAccount(refreshed);
   return { ...current };
 }
 
