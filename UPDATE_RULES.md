@@ -19,6 +19,8 @@
 8. 対応するバージョンタグの GitHub Release を正式公開する。Draft や Pre-release のままにしない。
 9. GitHub Release に上記3ファイルを添付し、ユーザーが `.exe` をダウンロードしてインストールできることを確認する。
 10. Release のファイル名と `latest.yml` の参照先が一致し、自動アップデートでも取得できることを確認する。
+11. GitHub Release の本文はUTF-8のMarkdownファイルを用意し、`gh release create/edit --notes-file <file>` で登録する。コマンド引数へ改行エスケープを直接記述しない。
+12. 公開後にGitHub Releaseページを確認し、Markdownの見出し・箇条書き・改行が正しく表示され、`` `n `` などの制御文字が本文へ露出していないことを確認する。
 
 ## バージョン管理
 
@@ -36,5 +38,5 @@
 - Git のコミットと push の結果
 - GitHub Release のURL
 - インストーラー、blockmap、`latest.yml` の公開確認
+- Release本文のMarkdown表示確認
 - 実施したテストとビルドの結果
-
