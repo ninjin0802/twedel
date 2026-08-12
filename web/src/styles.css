@@ -242,6 +242,9 @@ code {
 .update-download p { margin: 0 0 .55rem; }
 .update-download__progress { background: var(--surface); }
 .update-download__progress .progress__label { color: var(--fg); text-shadow: 0 1px 2px var(--surface); }
+.update-notes { margin: .75rem 0 1rem; padding: .85rem; border-left: 3px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--surface); }
+.update-notes > strong { display: block; margin-bottom: .45rem; }
+.update-notes > div { color: var(--muted); line-height: 1.65; white-space: pre-wrap; }
 .release-card { padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
 .release-card h3 { margin: .55rem 0; }
 .release-card ul { margin-bottom: 0; padding-left: 1.25rem; }

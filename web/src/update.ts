@@ -1,6 +1,7 @@
 export type UpdateState =
   | { status: 'idle' | 'checking' | 'latest' }
-  | { status: 'available' | 'downloaded' | 'installing'; version: string }
+  | { status: 'available'; version: string; releaseNotes?: string }
+  | { status: 'downloaded' | 'installing'; version: string }
   | { status: 'downloading'; percent: number }
   | { status: 'error'; message: string };
 interface UpdateBridge {

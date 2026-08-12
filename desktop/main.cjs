@@ -46,6 +46,17 @@ function publishUpdateState(next) {
   mainWindow?.webContents.send('update:state', next);
 }
 
+function releaseNotesText(releaseNotes) {
+  if (typeof releaseNotes === 'string') return releaseNotes.trim();
+  if (Array.isArray(releaseNotes)) {
+    return releaseNotes
+      .map((entry) => typeof entry?.note === 'string' ? entry.note.trim() : '')
+      .filter(Boolean)
+      .join('\n\n');
+  }
+  return '';
+}
+
 function configureUpdater() {
   autoUpdater.autoDownload = false;
   // Installation is started explicitly with silent=true after download.
@@ -53,7 +64,11 @@ function configureUpdater() {
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.autoRunAppAfterInstall = true;
   autoUpdater.on('checking-for-update', () => publishUpdateState({ status: 'checking' }));
-  autoUpdater.on('update-available', (info) => publishUpdateState({ status: 'available', version: info.version }));
+  autoUpdater.on('update-available', (info) => publishUpdateState({
+    status: 'available',
+    version: info.version,
+    releaseNotes: releaseNotesText(info.releaseNotes),
+  }));
   autoUpdater.on('update-not-available', () => publishUpdateState({ status: 'latest' }));
   autoUpdater.on('download-progress', (p) => publishUpdateState({ status: 'downloading', percent: Math.round(p.percent) }));
   autoUpdater.on('update-downloaded', async (info) => {
