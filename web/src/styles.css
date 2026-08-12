@@ -217,6 +217,15 @@ code {
 
 .panel--compact { padding-block: 0.8rem; }
 .connection-panel .harvest { margin-top: 0.5rem; }
+.account-switcher { margin-top: .8rem; padding: .8rem; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); }
+.account-switcher__list { display: flex; gap: .55rem; overflow-x: auto; padding-bottom: .25rem; }
+.account-card { display: flex; align-items: center; gap: .55rem; min-width: 155px; padding: .65rem .75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--fg); text-align: left; cursor: pointer; }
+.account-card:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
+.account-card.is-active { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent); }
+.account-card span:last-child { display: grid; gap: .1rem; }
+.account-card small { color: var(--muted); }
+.account-avatar { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%; color: white; background: linear-gradient(135deg, var(--accent), #8b5cf6); font-weight: 750; }
+.account-add { margin-top: .65rem; }
 .settings-disclosure { margin-top: 0.75rem; }
 
 .app__head {

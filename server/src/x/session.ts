@@ -1,6 +1,6 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type { SessionInfo, TransportMode } from '../../../shared/types.js';
+import type { SavedAccount, SessionInfo, TransportMode } from '../../../shared/types.js';
 import { maskSecret } from '../config.js';
 import {
   OPERATIONS,
@@ -14,7 +14,7 @@ import {
 import { resetTimelineSource } from './fetchTweets.js';
 import type { HarvestOptions } from './harvest.js';
 import { harvestCookies } from './harvest.js';
-import { sessionFile } from './paths.js';
+import { accountsFile, sessionFile } from './paths.js';
 import type { PlaywrightTransportOptions } from './playwright.js';
 import { createPlaywrightTransport } from './playwright.js';
 import {
@@ -54,6 +54,41 @@ interface StoredSession {
   screenName?: string;
   userId?: string;
   savedAt: string;
+}
+
+interface StoredAccounts {
+  version: 1;
+  accounts: StoredSession[];
+}
+
+function accountId(account: Pick<StoredSession, 'userId' | 'screenName'>): string {
+  return account.userId ? `id:${account.userId}` : `name:${(account.screenName ?? '').toLowerCase()}`;
+}
+
+async function readAccounts(): Promise<StoredSession[]> {
+  try {
+    const parsed = JSON.parse(await readFile(accountsFile(), 'utf8')) as Partial<StoredAccounts>;
+    return Array.isArray(parsed.accounts)
+      ? parsed.accounts.filter((item) => item?.mode === 'cookie' && item.authToken && item.ct0)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeAccounts(accounts: StoredSession[]): Promise<void> {
+  const file = accountsFile();
+  await mkdir(dirname(file), { recursive: true });
+  await writeFile(file, `${JSON.stringify({ version: 1, accounts }, null, 2)}\n`, {
+    encoding: 'utf8', mode: 0o600,
+  });
+}
+
+async function saveAccount(account: StoredSession): Promise<void> {
+  if (account.mode !== 'cookie' || !account.screenName) return;
+  const accounts = await readAccounts();
+  const id = accountId(account);
+  await writeAccounts([...accounts.filter((item) => accountId(item) !== id), account]);
 }
 
 let transport: XTransport | null = null;
@@ -503,7 +538,7 @@ async function connectPlaywright(opts?: PlaywrightTransportOptions): Promise<Ses
   // Written so a restart can report which mode was last used. There are no
   // cookies to save: they live in the browser profile directory, which is
   // exactly why this mode does not go stale.
-  await persist({
+  const stored: StoredSession = {
     version: 1,
     mode: 'playwright',
     authToken: '',
@@ -511,7 +546,9 @@ async function connectPlaywright(opts?: PlaywrightTransportOptions): Promise<Ses
     screenName: identity.screenName,
     userId: identity.userId,
     savedAt: new Date().toISOString(),
-  });
+  };
+  await persist(stored);
+  await saveAccount(stored);
 
   return { ...current, message: `${PLAYWRIGHT_CONNECTED_MESSAGE} ${PLAYWRIGHT_IGNORES_COOKIES_NOTE}` };
 }
@@ -599,7 +636,7 @@ export async function setCredentials(
     userId: identity.userId,
   };
 
-  await persist({
+  const stored: StoredSession = {
     version: 1,
     mode,
     authToken: token,
@@ -607,7 +644,9 @@ export async function setCredentials(
     screenName: identity.screenName,
     userId: identity.userId,
     savedAt: new Date().toISOString(),
-  });
+  };
+  await persist(stored);
+  await saveAccount(stored);
 
   return { ...current };
 }
@@ -703,6 +742,47 @@ export async function getSession(): Promise<SessionInfo> {
     userId: stored.userId,
   };
   return { ...current };
+}
+
+/** List saved identities without ever exposing their credentials. */
+export async function getSavedAccounts(): Promise<SavedAccount[]> {
+  const stored = await readStored();
+  if (stored?.mode === 'cookie' && stored.screenName) await saveAccount(stored);
+  const accounts = await readAccounts();
+  const activeId = current?.connected
+    ? accountId({ userId: current.userId, screenName: current.screenName })
+    : stored?.screenName ? accountId(stored) : null;
+  return accounts.map((account) => ({
+    id: accountId(account),
+    screenName: account.screenName ?? '?',
+    ...(account.userId ? { userId: account.userId } : {}),
+    active: accountId(account) === activeId,
+    savedAt: account.savedAt,
+  }));
+}
+
+/** Activate a previously saved cookie session without sending secrets to the UI. */
+export async function switchSavedAccount(id: string): Promise<SessionResult | null> {
+  const account = (await readAccounts()).find((item) => accountId(item) === id);
+  if (!account) return null;
+  if (transport) await transport.close();
+  transport = createCookieTransport({ authToken: account.authToken, ct0: account.ct0 });
+  secrets = { authToken: account.authToken, ct0: account.ct0 };
+  current = { connected: true, mode: 'cookie', screenName: account.screenName, userId: account.userId };
+  clearManualQueryIds();
+  resetTimelineSource();
+  await persist({ ...account, savedAt: new Date().toISOString() });
+  return { ...current };
+}
+
+export async function removeSavedAccount(id: string): Promise<boolean> {
+  const accounts = await readAccounts();
+  const found = accounts.some((item) => accountId(item) === id);
+  if (!found) return false;
+  const active = current?.connected && accountId({ userId: current.userId, screenName: current.screenName }) === id;
+  await writeAccounts(accounts.filter((item) => accountId(item) !== id));
+  if (active) await clearSession();
+  return true;
 }
 
 /**

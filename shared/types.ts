@@ -114,3 +114,12 @@ export interface SessionInfo {
    */
   message?: string;
 }
+
+/** Safe account metadata. Credentials are never included in API responses. */
+export interface SavedAccount {
+  id: string;
+  screenName: string;
+  userId?: string;
+  active: boolean;
+  savedAt: string;
+}

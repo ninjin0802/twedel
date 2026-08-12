@@ -212,6 +212,12 @@ export function App() {
     setSelectedIds(new Set<string>());
   }, []);
 
+  const handleSession = useCallback((next: SessionInfo | null) => {
+    setSession(next);
+    setTweets([]);
+    setSelectedIds(new Set<string>());
+  }, []);
+
   const toggleOne = useCallback((id: string, selected: boolean) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -334,7 +340,7 @@ export function App() {
               <option value="system">システム</option><option value="light">ライト</option><option value="dark">ダーク</option>
             </select>
           </label>
-          <span className="sidebar-version">Version {version ?? '0.6.0'}</span>
+          <span className="sidebar-version">Version {version ?? '0.7.0'}</span>
         </div>
       </aside>
 
@@ -385,7 +391,7 @@ export function App() {
 
       <CredentialsPanel
         session={session}
-        onSession={setSession}
+        onSession={handleSession}
         autoHarvest={sessionChecked && !session?.connected}
       />
       <SourcePanel tweets={tweets} onTweets={handleTweets} connected={session?.connected === true} />
@@ -469,7 +475,7 @@ export function App() {
       </>}
 
       {page === 'settings' && (
-        <CredentialsPanel session={session} onSession={setSession} showDetails />
+        <CredentialsPanel session={session} onSession={handleSession} showDetails />
       )}
       {(page === 'updates' || page === 'about') && <AppInfo
         page={page} version={version} updateState={updateState} updateBlocked={runInProgress}

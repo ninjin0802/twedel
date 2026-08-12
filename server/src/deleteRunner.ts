@@ -178,6 +178,13 @@ interface RunRecord {
 const runs = new Map<string, RunRecord>();
 let activeRunId: string | null = null;
 
+/** Account/session changes must not redirect an in-flight destructive run. */
+export function hasActiveRun(): boolean {
+  if (activeRunId === null) return false;
+  const active = runs.get(activeRunId);
+  return active !== undefined && !isTerminal(active.event.state);
+}
+
 const TERMINAL: ReadonlySet<RunState> = new Set<RunState>(['done', 'stopped', 'error']);
 
 /** Slice length for long waits, so a stop request is noticed within a second. */

@@ -3,6 +3,7 @@ import type {
   DeleteStatus,
   ProgressEvent,
   SessionInfo,
+  SavedAccount,
   TransportMode,
   Tweet,
 } from '@shared/types';
@@ -131,12 +132,24 @@ export function postSession(input: {
  * minutes). Answers 200 with `connected: false` + `message` on every
  * user-fixable failure, exactly like `postSession`. No credential comes back.
  */
-export function harvestSession(input: { timeoutMs?: number } = {}): Promise<SessionResult> {
+export function harvestSession(input: { timeoutMs?: number; newAccount?: boolean } = {}): Promise<SessionResult> {
   return request('/api/session/harvest', { method: 'POST', body: JSON.stringify(input) });
 }
 
 export function deleteSession(): Promise<{ ok: true }> {
   return request('/api/session', { method: 'DELETE' });
+}
+
+export function getAccounts(): Promise<{ accounts: SavedAccount[] }> {
+  return request('/api/accounts');
+}
+
+export function switchAccount(id: string): Promise<SessionResult> {
+  return request('/api/accounts/switch', { method: 'POST', body: JSON.stringify({ id }) });
+}
+
+export function removeAccount(id: string): Promise<{ ok: true }> {
+  return request(`/api/accounts/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 export function setTransactionId(value: string | null): Promise<{ ok: true; manual: boolean }> {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { SessionInfo, TransportMode } from '@shared/types';
+import type { SavedAccount, SessionInfo, TransportMode } from '@shared/types';
 import * as api from '../api';
 
 interface Props {
@@ -152,6 +152,8 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
   const [mode, setMode] = useState<TransportMode>('cookie');
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [harvest, setHarvest] = useState<Status>({ kind: 'idle' });
+  const [accounts, setAccounts] = useState<SavedAccount[]>([]);
+  const [accountStatus, setAccountStatus] = useState<Status>({ kind: 'idle' });
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [txId, setTxId] = useState('');
@@ -195,11 +197,17 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
    * is a `SessionInfo`, so a failure is `connected: false` + `message` rather
    * than a thrown error.
    */
-  async function harvestFromChrome() {
+  async function refreshAccounts() {
+    try { setAccounts((await api.getAccounts()).accounts); } catch { setAccounts([]); }
+  }
+
+  useEffect(() => { void refreshAccounts(); }, [session?.screenName]);
+
+  async function harvestFromChrome(newAccount = false) {
     setHarvest({ kind: 'busy' });
     setStatus({ kind: 'idle' });
     try {
-      const result = await api.harvestSession();
+      const result = await api.harvestSession(newAccount ? { newAccount: true } : {});
       onSession(result);
       if (result.connected) {
         // The manual fields are now both empty and unnecessary; they collapse
@@ -210,6 +218,7 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
           kind: 'ok',
           text: `接続成功: @${result.screenName ?? '(不明)'} — Cookie を Chrome から取得しました。`,
         });
+        await refreshAccounts();
       } else {
         setHarvest({
           kind: 'error',
@@ -219,6 +228,18 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
     } catch (err) {
       onSession(null);
       setHarvest({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  async function switchAccount(id: string) {
+    setAccountStatus({ kind: 'busy' });
+    try {
+      const result = await api.switchAccount(id);
+      onSession(result);
+      await refreshAccounts();
+      setAccountStatus({ kind: 'ok', text: `@${result.screenName ?? '?'} に切り替えました。` });
+    } catch (err) {
+      setAccountStatus({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
     }
   }
 
@@ -309,7 +330,33 @@ export function CredentialsPanel({ session, onSession, autoHarvest = false, show
         )}
       </header>
 
-      {!session?.connected && <HarvestBox status={harvest} onHarvest={harvestFromChrome} />}
+      {accounts.length > 0 && (
+        <div className="account-switcher" aria-label="アカウント切り替え">
+          <div className="account-switcher__list">
+            {accounts.map((account) => (
+              <button
+                type="button"
+                key={account.id}
+                className={`account-card${account.active ? ' is-active' : ''}`}
+                onClick={() => void switchAccount(account.id)}
+                disabled={account.active || accountStatus.kind === 'busy'}
+              >
+                <span className="account-avatar">{account.screenName.slice(0, 1).toUpperCase()}</span>
+                <span><strong>@{account.screenName}</strong><small>{account.active ? '使用中' : '切り替える'}</small></span>
+              </button>
+            ))}
+          </div>
+          <button type="button" className="btn account-add" onClick={() => void harvestFromChrome(true)} disabled={harvest.kind === 'busy'}>
+            ＋ 別のアカウントを追加
+          </button>
+          <p className="hint">追加時は専用Chromeが開きます。追加したいXアカウントでログインしてください。</p>
+        </div>
+      )}
+
+      {accountStatus.kind === 'ok' && <p className="inline-msg inline-msg--ok">{accountStatus.text}</p>}
+      {accountStatus.kind === 'error' && <p className="inline-msg inline-msg--error">{accountStatus.text}</p>}
+
+      {!session?.connected && <HarvestBox status={harvest} onHarvest={() => void harvestFromChrome(false)} />}
 
       {showDetails && <details className="disclosure settings-disclosure" open>
         <summary>詳細設定</summary>

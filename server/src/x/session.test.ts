@@ -10,9 +10,11 @@ import { knownQueryIds, resetQueryIdState, setManualQueryId } from './queryId.js
 import {
   HARVEST_CONNECTED_MESSAGE,
   clearSession,
+  getSavedAccounts,
   getSession,
   getTransport,
   harvestSession,
+  switchSavedAccount,
   setCredentials,
 } from './session.js';
 
@@ -96,6 +98,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await clearSession();
+  await rm(join(dir, 'accounts.json'), { force: true });
   resetQueryIdState();
   settingsHits = 0;
   verifyHits = 0;
@@ -151,6 +154,22 @@ describe('setCredentials - happy path', () => {
     expect(stored.authToken).toBe(AUTH);
     expect(stored.ct0).toBe(CT0);
     expect(stored.screenName).toBe('owner');
+  });
+
+  it('saves multiple accounts and switches without exposing credentials', async () => {
+    settingsReply = { status: 200, body: { screen_name: 'first', id_str: '1' } };
+    await setCredentials(AUTH, CT0, 'cookie');
+    settingsReply = { status: 200, body: { screen_name: 'second', id_str: '2' } };
+    await setCredentials('second-auth-token', 'second-ct0-token', 'cookie');
+
+    const accounts = await getSavedAccounts();
+    expect(accounts.map((account) => account.screenName).sort()).toEqual(['first', 'second']);
+    expect(JSON.stringify(accounts)).not.toContain(AUTH);
+    expect(JSON.stringify(accounts)).not.toContain(CT0);
+
+    const switched = await switchSavedAccount('id:1');
+    expect(switched).toMatchObject({ connected: true, screenName: 'first', userId: '1' });
+    expect((await getSavedAccounts()).find((account) => account.id === 'id:1')?.active).toBe(true);
   });
 });
 

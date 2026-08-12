@@ -25,6 +25,11 @@ export function sessionFile(): string {
   return resolve(dataDir(), 'session.json');
 }
 
+/** `<dataDir>/accounts.json` - private saved account cookies (mode 0600 where supported). */
+export function accountsFile(): string {
+  return resolve(dataDir(), 'accounts.json');
+}
+
 /** `<dataDir>/queryids.json` - scraped GraphQL queryIds. Not sensitive. */
 export function queryIdsFile(): string {
   return resolve(dataDir(), 'queryids.json');
