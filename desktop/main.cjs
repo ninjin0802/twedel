@@ -1,0 +1,79 @@
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { autoUpdater } = require('electron-updater');
+const { join } = require('node:path');
+const { pathToFileURL } = require('node:url');
+
+let mainWindow;
+let updateState = { status: 'idle' };
+
+function publishUpdateState(next) {
+  updateState = next;
+  mainWindow?.webContents.send('update:state', next);
+}
+
+function configureUpdater() {
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on('checking-for-update', () => publishUpdateState({ status: 'checking' }));
+  autoUpdater.on('update-available', (info) => publishUpdateState({ status: 'available', version: info.version }));
+  autoUpdater.on('update-not-available', () => publishUpdateState({ status: 'latest' }));
+  autoUpdater.on('download-progress', (p) => publishUpdateState({ status: 'downloading', percent: Math.round(p.percent) }));
+  autoUpdater.on('update-downloaded', (info) => publishUpdateState({ status: 'downloaded', version: info.version }));
+  autoUpdater.on('error', (error) => publishUpdateState({ status: 'error', message: error.message }));
+  ipcMain.handle('update:get-state', () => updateState);
+  ipcMain.handle('update:check', async () => {
+    if (!app.isPackaged) return publishUpdateState({ status: 'error', message: '開発版では更新を確認できません。' });
+    await autoUpdater.checkForUpdates();
+    return updateState;
+  });
+  ipcMain.handle('update:download', async () => { await autoUpdater.downloadUpdate(); return updateState; });
+  ipcMain.handle('update:install', () => autoUpdater.quitAndInstall(false, true));
+}
+
+async function startBackend() {
+  const root = app.getAppPath();
+  process.env.TWEDEL_DATA_DIR = join(app.getPath('userData'), 'data');
+  process.env.TWEDEL_WEB_DIR = join(root, 'dist');
+  const serverModule = await import(pathToFileURL(join(root, 'dist-server', 'index.js')).href);
+  await serverModule.startServer();
+}
+
+async function createWindow() {
+  const win = new BrowserWindow({
+    width: 1240,
+    height: 820,
+    minWidth: 900,
+    minHeight: 650,
+    autoHideMenuBar: true,
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      preload: join(__dirname, 'preload.cjs'),
+    },
+  });
+  mainWindow = win;
+
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    try {
+      const response = await fetch('http://127.0.0.1:5174/api/health');
+      if (response.ok) break;
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  await win.loadURL('http://127.0.0.1:5174');
+}
+
+app.whenReady().then(async () => {
+  try {
+    configureUpdater();
+    await startBackend();
+    await createWindow();
+    if (app.isPackaged) setTimeout(() => void autoUpdater.checkForUpdates(), 3000);
+  } catch (error) {
+    dialog.showErrorBox('twedel', error instanceof Error ? error.message : String(error));
+    app.quit();
+  }
+});
+
+app.on('window-all-closed', () => app.quit());

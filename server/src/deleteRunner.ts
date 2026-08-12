@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import type { DeleteLogEntry, ProgressEvent, RunState, Tweet } from '../../shared/types.js';
+import type { ProgressEvent, RunState, Tweet } from '../../shared/types.js';
 import { config } from './config.js';
-import { appendEntries, readLog } from './log.js';
+import { readLog } from './log.js';
 import { getMany, mergeMissingTweets } from './store.js';
 import type { MutateOutcome } from './x/mutate.js';
 import { deleteTweet as realDeleteTweet } from './x/mutate.js';
@@ -462,27 +462,6 @@ export function resetRuns(): void {
   activeRunId = null;
 }
 
-function logEntry(
-  runId: string,
-  tweet: Tweet,
-  status: DeleteLogEntry['status'],
-  error?: string,
-): DeleteLogEntry {
-  return {
-    runId,
-    id: tweet.id,
-    createdAt: tweet.createdAt,
-    text: tweet.text,
-    isRetweet: tweet.isRetweet,
-    // Recorded so a like is distinguishable from a deletion in the log; dropped
-    // by JSON for ordinary tweets, keeping old log lines byte-identical.
-    ...(tweet.isLike ? { isLike: true } : {}),
-    status,
-    ...(error ? { error } : {}),
-    at: new Date().toISOString(),
-  };
-}
-
 function resolvePacing(options: RunOptions | undefined): Pacing {
   const minDelayMs = Math.max(0, options?.minDelayMs ?? config.minDelayMs);
   const maxDelayMs = Math.max(minDelayMs, options?.maxDelayMs ?? config.maxDelayMs);
@@ -498,8 +477,6 @@ interface RunStart {
   alreadyGone: number;
   failed: number;
   options: Pacing;
-  /** Ids already on disk as `pending` for this run; re-logging them would duplicate. */
-  alreadyPending: ReadonlySet<string>;
 }
 
 function attach(record: RunRecord, tweets: Tweet[], start: RunStart, deps: RunnerDeps): void {
@@ -570,7 +547,6 @@ export function startRun(ids: string[], options?: RunOptions, deps?: RunnerDeps)
     alreadyGone: 0,
     failed: 0,
     options: resolvePacing(options),
-    alreadyPending: new Set<string>(),
   }, deps ?? {});
 
   return runId;
@@ -617,33 +593,34 @@ function toTweet(t: CheckpointTweet): Tweet {
  *    rather than a second one that starts at zero.
  */
 export async function resumeRun(runId: string, deps?: RunnerDeps): Promise<string> {
+  // Reject an in-flight run before touching its checkpoint: it may be in the
+  // middle of an atomic replacement and is never a resumable candidate.
+  assertNothingInFlight();
   const { checkpoint, reason } = await loadCheckpoint(runId);
   if (!checkpoint) throw new UnknownCheckpointError(runId, reason);
 
-  assertNothingInFlight();
   const existing = runs.get(runId);
   if (existing && !isTerminal(existing.event.state)) throw new RunConflictError(runId);
 
   // What the log already knows about THIS run, collapsed to a latest status per
   // id (see `readLog`), which is precisely the question being asked here.
+  // Read legacy logs created by older versions solely to avoid re-sending an
+  // already-settled deletion after an upgrade. This version never appends to it.
   const { entries } = await readLog({ runId });
-  const logged = new Map(entries.map((e) => [e.id, e.status]));
+  const logged = new Map(entries.map((entry) => [entry.id, entry.status]));
 
   let { done, ok, alreadyGone } = checkpoint;
   const failed = checkpoint.failed;
   const pending: CheckpointTweet[] = [];
-
-  for (const t of checkpoint.remaining) {
-    const status = logged.get(t.id);
+  for (const tweet of checkpoint.remaining) {
+    const status = logged.get(tweet.id);
     if (status === 'deleted' || status === 'already_gone') {
-      // Settled between the log append and the checkpoint write. Count it (the
-      // checkpoint could not) and never send it to X a second time.
       done += 1;
       if (status === 'deleted') ok += 1;
       else alreadyGone += 1;
-      continue;
+    } else {
+      pending.push(tweet);
     }
-    pending.push(t);
   }
 
   // Re-seed the store so `getMany` and the rest of the existing code paths work
@@ -676,9 +653,6 @@ export async function resumeRun(runId: string, deps?: RunnerDeps): Promise<strin
     alreadyGone,
     failed,
     options: checkpoint.options,
-    alreadyPending: new Set(
-      [...logged.entries()].filter(([, status]) => status === 'pending').map(([id]) => id),
-    ),
   }, deps ?? {});
 
   return runId;
@@ -805,18 +779,17 @@ async function execute(
         return (t: Tweet) => realDeleteTweet(transport, t);
       })());
 
+    // The checkpoint is temporary recovery state, not a deletion history. It
+    // contains only work still pending, is replaced after every item, and is
+    // removed after a clean completion.
+    await writeCheckpoint(0, 'running');
+
     // ---- SAFETY STEP: every target is logged, with its text, before the first
     // delete request leaves this process. Do not move this below the loop.
     //
     // On a resume, a tweet whose `pending` line is already on disk is skipped:
     // the safety property is "its text is in the log before it is deleted", and
     // that is already true. Writing it again would just duplicate the log.
-    await appendEntries(
-      tweets
-        .filter((t) => !start.alreadyPending.has(t.id))
-        .map((t) => logEntry(runId, t, 'pending')),
-    );
-
     publish({});
 
     for (let i = 0; i < tweets.length; i += 1) {
@@ -924,7 +897,6 @@ async function execute(
 
       done += 1;
 
-      await appendEntries([logEntry(runId, tweet, outcome.status, outcome.error)]);
       await writeCheckpoint(i + 1, record.event.state);
 
       publish({ currentId: tweet.id, currentText: tweet.text });

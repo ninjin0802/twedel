@@ -1,19 +1,27 @@
 {
   "name": "twedel",
-  "version": "0.1.0",
+  "version": "0.4.1",
+  "author": "ninjin",
   "private": true,
   "type": "module",
-  "description": "Local-only web app for bulk-deleting your own tweets on X",
+  "description": "Windows desktop app for bulk-deleting your own tweets on X",
+  "main": "desktop/main.cjs",
   "scripts": {
     "dev": "concurrently -n server,web -c cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
     "dev:server": "tsx watch server/src/index.ts",
     "dev:web": "vite --config web/vite.config.ts",
-    "build": "vite build --config web/vite.config.ts",
+    "build:web": "vite build --config web/vite.config.ts",
+    "build:server": "esbuild server/src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-server/index.js",
+    "build": "npm run build:web && npm run build:server",
+    "desktop": "npm run build && electron .",
+    "dist:win": "npm run build && electron-builder --win nsis",
+    "release:win": "npm run build && electron-builder --win nsis --publish always",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.web.json --noEmit",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.12",
+    "electron-updater": "^6.8.9",
     "express": "^5.2.1",
     "playwright": "^1.62.1",
     "react": "^19.2.8",
@@ -32,10 +40,39 @@
     "@vitejs/plugin-react": "^6.0.5",
     "adm-zip": "^0.6.0",
     "concurrently": "^10.0.4",
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "esbuild": "^0.28.2",
     "msw": "^2.15.0",
     "tsx": "^4.20.7",
     "typescript": "^5.9.3",
     "vite": "^8.2.1",
     "vitest": "^4.1.10"
+  },
+  "build": {
+    "appId": "jp.twedel.app",
+    "productName": "twedel",
+    "asar": true,
+    "files": [
+      "desktop/**/*",
+      "dist/**/*",
+      "dist-server/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/playwright-core/.local-browsers/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": [{
+      "provider": "github",
+      "owner": "ninjin0802",
+      "repo": "twedel"
+    }]
   }
 }

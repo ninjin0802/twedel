@@ -1,6 +1,8 @@
 import { mkdir } from 'node:fs/promises';
 import express from 'express';
 import type { Express } from 'express';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { config } from './config.js';
 import { stopAllRuns, waitForRun } from './deleteRunner.js';
 import { diagnosticsRouter } from './routes/diagnostics.js';
@@ -30,7 +32,15 @@ export function createApp(): Express {
   app.use('/api', diagnosticsRouter);
   app.use('/api', tweetsRouter);
   app.use('/api', runRouter);
+  // Kept read-only for installations upgrading from a version that created a
+  // deletion log. New runs never write entries and the desktop UI does not show it.
   app.use('/api', logRouter);
+
+  const webDir = process.env['TWEDEL_WEB_DIR'];
+  if (webDir && existsSync(webDir)) {
+    app.use(express.static(webDir));
+    app.get('/{*path}', (_req, res) => res.sendFile(resolve(webDir, 'index.html')));
+  }
 
   // Last: turns thrown `HttpError`s into scrubbed JSON and keeps stack traces
   // out of the browser.
@@ -39,7 +49,7 @@ export function createApp(): Express {
   return app;
 }
 
-async function main(): Promise<void> {
+export async function startServer(): Promise<void> {
   // data/ holds the local session + run logs; make sure it exists before we serve.
   await mkdir(config.dataDir, { recursive: true });
 
@@ -100,7 +110,7 @@ const invokedDirectly =
   process.argv[1] !== undefined && /index\.[cm]?ts$/.test(process.argv[1].replace(/\\/g, '/'));
 
 if (invokedDirectly) {
-  main().catch((err: unknown) => {
+  startServer().catch((err: unknown) => {
     console.error('[twedel] fatal:', err);
     process.exit(1);
   });

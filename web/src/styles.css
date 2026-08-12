@@ -201,6 +201,10 @@ code {
   padding: 1.5rem 1.25rem 5rem;
 }
 
+.panel--compact { padding-block: 0.8rem; }
+.connection-panel .harvest { margin-top: 0.5rem; }
+.settings-disclosure { margin-top: 0.75rem; }
+
 .app__head {
   display: flex;
   flex-wrap: wrap;
@@ -213,6 +217,30 @@ code {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }
+
+.menu-button {
+  width: 2.35rem; height: 2.35rem; display: grid; place-content: center; gap: 4px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); cursor: pointer;
+}
+.menu-button span { display: block; width: 17px; height: 2px; background: var(--fg); border-radius: 2px; }
+.menu-backdrop { position: fixed; inset: 0; z-index: 40; border: 0; background: rgba(0,0,0,.3); }
+.app-menu {
+  position: fixed; z-index: 41; top: 0; left: 0; width: min(19rem, 84vw); height: 100vh;
+  padding: 1.25rem; background: var(--surface); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; gap: .35rem;
+}
+.app-menu__title { font-size: 1.1rem; font-weight: 700; padding: .5rem .7rem 1rem; }
+.app-menu button { border: 0; border-radius: var(--radius); padding: .8rem .75rem; text-align: left; color: var(--fg); background: transparent; cursor: pointer; font: inherit; }
+.app-menu button:hover { background: var(--surface-2); }
+.info-page { max-width: 48rem; margin-inline: auto; }
+.about-mark { width: 4rem; height: 4rem; margin: 2rem auto 1rem; display: grid; place-content: center; border-radius: 1rem; color: var(--accent); background: var(--accent-soft); font-size: 2rem; }
+.info-page > h3, .info-page > p { text-align: center; }
+.version-number { font-weight: 700; }
+.release-list { display: grid; gap: 1rem; margin-top: 1.25rem; }
+.update-box { margin-top: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
+.release-card { padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
+.release-card h3 { margin: .55rem 0; }
+.release-card ul { margin-bottom: 0; padding-left: 1.25rem; }
+.release-card__title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 
 /* Brand mark: a small flat tile with a scissor glyph — a local delete tool. */
 .app__brand {
@@ -242,6 +270,7 @@ code {
   gap: 0.75rem;
   flex-wrap: wrap;
 }
+.app-version { color: var(--muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
 
 h1 {
   margin: 0;

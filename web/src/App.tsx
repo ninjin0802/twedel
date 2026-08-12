@@ -2,16 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FilterCriteria, ProgressEvent, SessionInfo, Tweet } from '@shared/types';
 import * as api from './api';
 import { CredentialsPanel } from './components/CredentialsPanel';
+import { AppInfo } from './components/AppInfo';
 import { DryRunDialog } from './components/DryRunDialog';
 import { FilterBar } from './components/FilterBar';
-import { LogViewer } from './components/LogViewer';
 import { ProgressPanel } from './components/ProgressPanel';
 import { ResumeBanner } from './components/ResumeBanner';
 import { SourcePanel } from './components/SourcePanel';
 import { TweetTable } from './components/TweetTable';
 import { DEFAULT_CRITERIA, applyFilter, hasUnreliableCounts, validateCriteria } from './filter';
+import { updates, type UpdateState } from './update';
 
 type Health = 'checking' | 'online' | 'offline';
+type Page = 'main' | 'settings' | 'updates' | 'about';
 
 const RUN_KEY = 'twedel.runId';
 
@@ -48,6 +50,10 @@ export function App() {
   const [health, setHealth] = useState<Health>('checking');
   const [version, setVersion] = useState<string | null>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [page, setPage] = useState<Page>('main');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle' });
 
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [criteria, setCriteria] = useState<FilterCriteria>(DEFAULT_CRITERIA);
@@ -70,7 +76,6 @@ export function App() {
    */
   const [runEpoch, setRunEpoch] = useState(0);
   const [resumable, setResumable] = useState<api.ResumableRun[]>([]);
-  const [showLog, setShowLog] = useState(false);
   /**
    * Whether the current run is genuinely in progress. Driven by the
    * ProgressPanel (onActiveChange) rather than by `runId !== null`, so a settled,
@@ -78,6 +83,7 @@ export function App() {
    * Defaults to false so a stale restored runId never locks the button on mount.
    */
   const [runInProgress, setRunInProgress] = useState(false);
+  const [runTargetIds, setRunTargetIds] = useState<ReadonlySet<string>>(() => new Set<string>());
 
   /** Interrupted runs the server still holds a checkpoint for. */
   const refreshResumable = useCallback(async () => {
@@ -105,9 +111,13 @@ export function App() {
       }
       try {
         const existing = await api.getSession();
-        if (!cancelled) setSession(existing);
+        if (!cancelled) {
+          setSession(existing);
+          setSessionChecked(true);
+        }
       } catch {
         /* no session yet — nothing to restore */
+        if (!cancelled) setSessionChecked(true);
       }
       if (!cancelled) await refreshResumable();
     })();
@@ -124,6 +134,12 @@ export function App() {
       /* private mode / storage disabled — reconnect just won't survive a reload */
     }
   }, [runId]);
+
+  useEffect(() => {
+    if (!updates) return;
+    void updates.getState().then(setUpdateState);
+    return updates.onState(setUpdateState);
+  }, []);
 
   const countsReliable = !hasUnreliableCounts(tweets);
   /**
@@ -188,6 +204,7 @@ export function App() {
       // Optimistically block the delete button; the panel confirms/clears this
       // via onActiveChange once its first snapshot lands.
       setRunInProgress(true);
+      setRunTargetIds(new Set(selectedTweets.map((tweet) => tweet.id)));
       setRunId(id);
       setDryRunOpen(false);
     } catch (err) {
@@ -223,17 +240,35 @@ export function App() {
 
   const handleFinished = useCallback(
     (event: ProgressEvent) => {
-      if (event.state === 'done' || event.state === 'stopped') setShowLog(true);
+      if (event.state === 'done' && runTargetIds.size > 0) {
+        setTweets((prev) => prev.filter((tweet) => !runTargetIds.has(tweet.id)));
+        setSelectedIds((prev) => new Set([...prev].filter((id) => !runTargetIds.has(id))));
+        setRunTargetIds(new Set<string>());
+      }
       // A stopped/errored run leaves its checkpoint behind, so it becomes
       // resumable the moment it settles.
       if (event.state === 'stopped' || event.state === 'error') void refreshResumable();
     },
-    [refreshResumable],
+    [refreshResumable, runTargetIds],
   );
+
+  const navigate = (next: Page) => {
+    setPage(next);
+    setMenuOpen(false);
+  };
 
   return (
     <div className="app">
       <header className="app__head">
+        <button
+          type="button"
+          className="menu-button"
+          aria-label="メニューを開く"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span /> <span /> <span />
+        </button>
         <div className="app__brand">
           <span className="app__mark" aria-hidden="true">✂</span>
           <div>
@@ -242,16 +277,22 @@ export function App() {
           </div>
         </div>
         <div className="app__status">
-          <span className={`pill pill--${health}`}>
-            {health === 'checking' && 'サーバー確認中…'}
-            {health === 'online' && `サーバー接続済み${version ? ` v${version}` : ''}`}
-            {health === 'offline' && 'サーバー未接続'}
-          </span>
-          <button type="button" className="btn" onClick={() => setShowLog((v) => !v)}>
-            {showLog ? '削除ログを隠す' : '削除ログを見る'}
-          </button>
+          <span className="app-version">v{version ?? '0.4.1'}</span>
         </div>
       </header>
+
+      {menuOpen && (
+        <>
+          <button className="menu-backdrop" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)} />
+          <nav className="app-menu" aria-label="メインメニュー">
+            <div className="app-menu__title">メニュー</div>
+            <button onClick={() => navigate('main')}>ホーム</button>
+            <button onClick={() => navigate('settings')}>詳細設定</button>
+            <button onClick={() => navigate('updates')}>アップデート内容</button>
+            <button onClick={() => navigate('about')}>バージョン情報</button>
+          </nav>
+        </>
+      )}
 
       {health === 'offline' && (
         <p className="inline-msg inline-msg--warn">
@@ -260,10 +301,15 @@ export function App() {
         </p>
       )}
 
+      {page === 'main' && <>
       <ResumeBanner runs={resumable} onResumed={handleResumed} onDiscarded={handleDiscarded} />
 
-      <CredentialsPanel session={session} onSession={setSession} />
-      <SourcePanel tweets={tweets} onTweets={handleTweets} />
+      <CredentialsPanel
+        session={session}
+        onSession={setSession}
+        autoHarvest={sessionChecked && !session?.connected}
+      />
+      <SourcePanel tweets={tweets} onTweets={handleTweets} connected={session?.connected === true} />
       <FilterBar
         criteria={criteria}
         onChange={setCriteria}
@@ -273,9 +319,7 @@ export function App() {
 
       <section className="panel">
         <header className="panel__head">
-          <h2>
-            <span className="step-badge">3</span> 対象の選択
-          </h2>
+          <h2>対象の選択</h2>
           <div className="row row--tight">
             <button
               type="button"
@@ -304,8 +348,8 @@ export function App() {
                 setStartError(null);
                 setDryRunOpen(true);
               }}
-              disabled={deleteGate.disabled}
-              title={deleteGate.title}
+              disabled={deleteGate.disabled || session?.connected !== true}
+              title={session?.connected !== true ? 'Xへの接続が完了すると削除できます' : deleteGate.title}
             >
               削除を確認 ({selectedTweets.length.toLocaleString()}件)
             </button>
@@ -334,8 +378,6 @@ export function App() {
         />
       )}
 
-      {showLog && <LogViewer />}
-
       {dryRunOpen && criteriaValid && (
         <DryRunDialog
           tweets={selectedTweets}
@@ -345,6 +387,17 @@ export function App() {
           onConfirm={startRun}
         />
       )}
+      </>}
+
+      {page === 'settings' && (
+        <CredentialsPanel session={session} onSession={setSession} showDetails />
+      )}
+      {(page === 'updates' || page === 'about') && <AppInfo
+        page={page} version={version} updateState={updateState} updateBlocked={runInProgress}
+        onCheck={() => void updates?.check()}
+        onDownload={() => void updates?.download()}
+        onInstall={() => { if (!runInProgress) void updates?.install(); }}
+      />}
     </div>
   );
 }

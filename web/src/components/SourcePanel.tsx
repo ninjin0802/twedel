@@ -7,6 +7,7 @@ import { makeSampleTweets } from '../sample';
 interface Props {
   tweets: Tweet[];
   onTweets: (tweets: Tweet[]) => void;
+  connected?: boolean;
 }
 
 function fmtDate(iso: string | null): string {
@@ -14,7 +15,7 @@ function fmtDate(iso: string | null): string {
   return iso.slice(0, 10);
 }
 
-export function SourcePanel({ tweets, onTweets }: Props) {
+export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
   const [path, setPath] = useState('');
   const [max, setMax] = useState('');
   /** What to fetch: the account's own tweets (default) or its likes to un-favorite. */
@@ -107,9 +108,7 @@ export function SourcePanel({ tweets, onTweets }: Props) {
   return (
     <section className="panel">
       <header className="panel__head">
-        <h2>
-          <span className="step-badge">2</span> 読み込む対象
-        </h2>
+        <h2>取得</h2>
       </header>
 
       {/* What to fetch: the account's own tweets, or its likes to un-favorite.
@@ -149,11 +148,12 @@ export function SourcePanel({ tweets, onTweets }: Props) {
             placeholder="未指定なら全件"
           />
         </label>
-        <button type="button" className="btn btn--primary" onClick={loadLive} disabled={busy}>
+        <button type="button" className="btn btn--primary" onClick={loadLive} disabled={busy || !connected}>
           {busy ? '取得中…' : isLikes ? 'いいねを取得' : 'ライブ取得'}
         </button>
         {busy && fetched !== null && <span className="live-count">取得中… {fetched}件</span>}
       </div>
+      {!connected && <p className="inline-msg inline-msg--waiting">Xへの接続が完了すると取得できます。</p>}
       <p className="hint">
         {isLikes
           ? 'X の API からいいねした投稿を直接取得します。これらは「削除」ではなくいいね解除の対象です（①で認証が必要です）。'

@@ -8,6 +8,7 @@ import {
   HARVEST_WAITING,
   HarvestBox,
   credentialsError,
+  shouldAutoHarvest,
 } from './CredentialsPanel';
 
 /**
@@ -38,6 +39,15 @@ describe('credentialsError', () => {
   });
 });
 
+describe('startup Chrome harvest', () => {
+  it('runs once only when startup checking found no connected session', () => {
+    expect(shouldAutoHarvest(true, false, false)).toBe(true);
+    expect(shouldAutoHarvest(true, true, false)).toBe(false);
+    expect(shouldAutoHarvest(true, false, true)).toBe(false);
+    expect(shouldAutoHarvest(false, false, false)).toBe(false);
+  });
+});
+
 describe('CookieFields', () => {
   it('renders the two password inputs in cookie mode', () => {
     const html = cookieFields('cookie');
@@ -56,7 +66,7 @@ describe('CookieFields', () => {
 
 describe('CredentialsPanel', () => {
   it('still shows the cookie inputs in its default (cookie) mode', () => {
-    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} />);
+    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} showDetails />);
     expect(html).toContain('auth_token');
     expect(html).toContain('CSRF');
     // The mode picker offers both transports.
@@ -64,7 +74,7 @@ describe('CredentialsPanel', () => {
   });
 
   it('offers 診断情報 in the 上級者向け section', () => {
-    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} />);
+    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} showDetails />);
 
     expect(html).toContain('上級者向け');
     expect(html).toContain('診断情報');
@@ -79,7 +89,7 @@ describe('CredentialsPanel', () => {
    * share, has to be on screen - not only in the README.
    */
   it('explains next to the button that a 404 from X does not mean "gone"', () => {
-    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} />);
+    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} showDetails />);
     expect(html).toMatch(/404/);
     expect(html).toMatch(/401/);
   });
@@ -127,7 +137,7 @@ describe('HarvestBox', () => {
 
 describe('CredentialsPanel - harvest and the manual fallback', () => {
   it('leads with the Chrome button and keeps manual entry as a collapsed fallback', () => {
-    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} />);
+    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} showDetails />);
 
     expect(html).toContain('Chromeから取得');
     expect(html).toContain('手動で入力');
@@ -138,7 +148,7 @@ describe('CredentialsPanel - harvest and the manual fallback', () => {
   });
 
   it('still keeps the DevTools steps, next to the fields they describe', () => {
-    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} />);
+    const html = renderToStaticMarkup(<CredentialsPanel session={null} onSession={noop} showDetails />);
     expect(html).toContain('DevTools');
     expect(html).toContain('Cookies');
   });

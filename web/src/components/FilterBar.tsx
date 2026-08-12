@@ -26,9 +26,7 @@ export function FilterBar({ criteria, onChange, countsReliable, errors = [] }: P
   return (
     <section className="panel">
       <header className="panel__head">
-        <h2>
-          <span className="step-badge">3</span> 絞り込み
-        </h2>
+        <h2>絞り込み</h2>
       </header>
 
       <div className="grid grid--4">

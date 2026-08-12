@@ -1,5 +1,7 @@
 node_modules/
 dist/
+dist-server/
+release/
 
 # data/ holds the local X session cookies (auth_token, ct0) and run logs.
 # These are live credentials for your account - they must NEVER be committed.

@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SessionInfo, TransportMode } from '@shared/types';
 import * as api from '../api';
 
 interface Props {
   session: SessionInfo | null;
   onSession: (session: SessionInfo | null) => void;
+  /** Start Chrome harvest once on mount when no stored session was restored. */
+  autoHarvest?: boolean;
+  showDetails?: boolean;
 }
 
 export type Status =
@@ -12,6 +15,14 @@ export type Status =
   | { kind: 'busy' }
   | { kind: 'ok'; text: string }
   | { kind: 'error'; text: string };
+
+export function shouldAutoHarvest(
+  enabled: boolean,
+  connected: boolean,
+  alreadyStarted: boolean,
+): boolean {
+  return enabled && !connected && !alreadyStarted;
+}
 
 /**
  * Repeated next to the output every time, not just in the docs. The user is
@@ -134,7 +145,7 @@ export function CookieFields({ mode, authToken, ct0, onAuthToken, onCt0 }: Cooki
   );
 }
 
-export function CredentialsPanel({ session, onSession }: Props) {
+export function CredentialsPanel({ session, onSession, autoHarvest = false, showDetails = false }: Props) {
   // Write-only: these live here and are never re-populated from a server response.
   const [authToken, setAuthToken] = useState('');
   const [ct0, setCt0] = useState('');
@@ -150,6 +161,7 @@ export function CredentialsPanel({ session, onSession }: Props) {
   const [queryStatus, setQueryStatus] = useState<Status>({ kind: 'idle' });
   const [diagText, setDiagText] = useState('');
   const [diagStatus, setDiagStatus] = useState<Status>({ kind: 'idle' });
+  const autoHarvestStarted = useRef(false);
 
   async function test() {
     const invalid = credentialsError(mode, authToken, ct0);
@@ -209,6 +221,12 @@ export function CredentialsPanel({ session, onSession }: Props) {
       setHarvest({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
     }
   }
+
+  useEffect(() => {
+    if (!shouldAutoHarvest(autoHarvest, session?.connected === true, autoHarvestStarted.current)) return;
+    autoHarvestStarted.current = true;
+    void harvestFromChrome();
+  }, [autoHarvest, session?.connected]);
 
   async function disconnect() {
     try {
@@ -279,10 +297,10 @@ export function CredentialsPanel({ session, onSession }: Props) {
   }
 
   return (
-    <section className="panel">
+    <section className="panel panel--compact connection-panel">
       <header className="panel__head">
         <h2>
-          <span className="step-badge">1</span> 認証情報
+          X アカウント
         </h2>
         {session?.connected ? (
           <span className="pill pill--ok">接続済み @{session.screenName ?? '?'}</span>
@@ -291,11 +309,13 @@ export function CredentialsPanel({ session, onSession }: Props) {
         )}
       </header>
 
-      {/* The primary path in cookie mode. Manual entry stays, one click away. */}
-      {mode === 'cookie' ? (
-        <>
-          <HarvestBox status={harvest} onHarvest={harvestFromChrome} />
-          {harvest.kind !== 'ok' && (
+      {!session?.connected && <HarvestBox status={harvest} onHarvest={harvestFromChrome} />}
+
+      {showDetails && <details className="disclosure settings-disclosure" open>
+        <summary>詳細設定</summary>
+        {/* Manual entry and alternative transports remain available as recovery tools. */}
+        {mode === 'cookie' ? (
+          <>
             <details className="disclosure">
               <summary>手動で入力 (DevTools から貼り付け)</summary>
               <div className="grid grid--2">
@@ -318,19 +338,18 @@ export function CredentialsPanel({ session, onSession }: Props) {
                 <li>この 2 つはアカウントそのものです。他人に共有しないでください。</li>
               </ol>
             </details>
-          )}
-        </>
-      ) : (
-        <div className="grid grid--2">
-          <CookieFields
-            mode={mode}
-            authToken={authToken}
-            ct0={ct0}
-            onAuthToken={setAuthToken}
-            onCt0={setCt0}
-          />
-        </div>
-      )}
+          </>
+        ) : (
+          <div className="grid grid--2">
+            <CookieFields
+              mode={mode}
+              authToken={authToken}
+              ct0={ct0}
+              onAuthToken={setAuthToken}
+              onCt0={setCt0}
+            />
+          </div>
+        )}
 
       <div className="grid grid--2">
         <label className="field">
@@ -471,6 +490,7 @@ export function CredentialsPanel({ session, onSession }: Props) {
           </pre>
         )}
       </details>
+      </details>}
     </section>
   );
 }
