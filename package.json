@@ -1,0 +1,41 @@
+{
+  "name": "twedel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-only web app for bulk-deleting your own tweets on X",
+  "scripts": {
+    "dev": "concurrently -n server,web -c cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "tsx watch server/src/index.ts",
+    "dev:web": "vite --config web/vite.config.ts",
+    "build": "vite build --config web/vite.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.web.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.13.12",
+    "express": "^5.2.1",
+    "playwright": "^1.62.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "undici": "^8.10.0",
+    "yauzl": "^3.4.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@types/yauzl": "^3.4.0",
+    "@vitejs/plugin-react": "^6.0.5",
+    "adm-zip": "^0.6.0",
+    "concurrently": "^10.0.4",
+    "msw": "^2.15.0",
+    "tsx": "^4.20.7",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+
+# data/ holds the local X session cookies (auth_token, ct0) and run logs.
+# These are live credentials for your account - they must NEVER be committed.
+# NOTE: must be `data/*`, not `data/` - git cannot re-include a file inside a
+# directory that was itself excluded, so `!data/.gitkeep` would never apply.
+data/*
+!data/.gitkeep
+
+*.log
+.DS_Store
