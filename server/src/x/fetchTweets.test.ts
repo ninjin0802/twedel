@@ -305,15 +305,31 @@ describe('fetchUserTweets', () => {
     expect(requestedCursors).toEqual(['', 'SAME']);
   });
 
-  it('stops when a page adds no new tweets', async () => {
+  it('continues past a duplicate-only bridge page to older tweets', async () => {
     pages[''] = { body: timeline([entry({ id: '31' }), cursorEntry('P2')]) };
     pages['P2'] = { body: timeline([entry({ id: '31' }), cursorEntry('P3')]) };
     pages['P3'] = { body: timeline([entry({ id: '32' }), cursorEntry('P4')]) };
 
     const tweets = await fetchUserTweets({ transport, screenName: 'me', pacing: NO_PACING });
 
-    expect(tweets.map((t) => t.id)).toEqual(['31']);
-    expect(requestedCursors).toEqual(['', 'P2']);
+    expect(tweets.map((t) => t.id).sort()).toEqual(['31', '32']);
+    // P4 is the terminal empty page; it must be requested to prove P3's cursor
+    // did not lead to still older data.
+    expect(requestedCursors).toEqual(['', 'P2', 'P3', 'P4']);
+  });
+
+  it('continues past a foreign-only bridge page to an old 2018 repost', async () => {
+    pages[''] = { body: timeline([entry({ id: '41' }), cursorEntry('BRIDGE')]) };
+    pages['BRIDGE'] = {
+      body: timeline([entry({ id: 'foreign', authorId: SOMEONE_ELSE }), cursorEntry('OLD')]),
+    };
+    pages['OLD'] = {
+      body: timeline([entry({ id: 'old-rt', text: 'RT @someone: old', retweetOf: '900', createdAt: 'Wed Oct 10 20:19:24 +0000 2018' })]),
+    };
+
+    const tweets = await fetchUserTweets({ transport, screenName: 'me', pacing: NO_PACING });
+    expect(tweets.find((tweet) => tweet.id === 'old-rt')).toMatchObject({ isRetweet: true, sourceTweetId: '900' });
+    expect(requestedCursors).toEqual(['', 'BRIDGE', 'OLD']);
   });
 
   it("filters out other users' tweets that the timeline interleaves", async () => {

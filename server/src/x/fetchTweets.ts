@@ -559,8 +559,12 @@ async function runTimelineOperation(
   let cursor: string | null = null;
   const seenCursors = new Set<string>();
   let rateLimitRetries = 0;
+  // Each split timeline owns its own budget. Sharing one global ceiling meant
+  // a long originals/replies history could consume every page before the
+  // dedicated repost operation even started.
+  let operationPages = 0;
 
-  while (run.page < MAX_PAGES) {
+  while (operationPages < MAX_PAGES) {
     if (signal?.aborted) return null;
 
     const params = new URLSearchParams({
@@ -607,6 +611,7 @@ async function runTimelineOperation(
     }
 
     run.page += 1;
+    operationPages += 1;
 
     let added = 0;
     for (const node of collectTweetNodes(res.body)) {
@@ -631,9 +636,10 @@ async function runTimelineOperation(
     // Loop guards: X keeps handing back a cursor forever at the end of a
     // timeline, and a repeated cursor means we are re-reading the same page.
     if (!next || seenCursors.has(next)) return null;
-    // A page of nothing new ends THIS operation. An empty page is NOT a refusal:
-    // an account with no reposts answers exactly this way.
-    if (added === 0) return null;
+    // Do NOT stop merely because this page added nothing. Old timelines often
+    // contain a bridge page made entirely of duplicate pinned/context rows or
+    // foreign conversation entries. Its Bottom cursor can still lead to older
+    // posts/reposts, so the advancing cursor is the only authoritative signal.
 
     seenCursors.add(next);
     cursor = next;
