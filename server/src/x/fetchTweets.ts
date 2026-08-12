@@ -237,6 +237,12 @@ function candidateOrder(): TimelineCandidate[] {
 /** Absolute page ceiling - a belt-and-braces guard against a cursor loop. */
 const MAX_PAGES = 1000;
 
+/**
+ * Old history can contain a small bridge of duplicate/context-only pages, but
+ * an endlessly changing cursor with no usable rows is not useful progress.
+ */
+const MAX_CONSECUTIVE_EMPTY_PAGES = 5;
+
 /** Consecutive 429s tolerated on one page before giving up. */
 const MAX_RATE_LIMIT_RETRIES = 5;
 
@@ -563,6 +569,7 @@ async function runTimelineOperation(
   // a long originals/replies history could consume every page before the
   // dedicated repost operation even started.
   let operationPages = 0;
+  let consecutiveEmptyPages = 0;
 
   while (operationPages < MAX_PAGES) {
     if (signal?.aborted) return null;
@@ -630,16 +637,20 @@ async function runTimelineOperation(
 
     run.emit(label, false);
 
+    consecutiveEmptyPages = added === 0 ? consecutiveEmptyPages + 1 : 0;
+
     if (max !== undefined && byId.size >= max) return null;
 
     const next = findBottomCursor(res.body);
     // Loop guards: X keeps handing back a cursor forever at the end of a
     // timeline, and a repeated cursor means we are re-reading the same page.
     if (!next || seenCursors.has(next)) return null;
-    // Do NOT stop merely because this page added nothing. Old timelines often
+    // Do NOT stop on the FIRST empty page. Old timelines often
     // contain a bridge page made entirely of duplicate pinned/context rows or
     // foreign conversation entries. Its Bottom cursor can still lead to older
-    // posts/reposts, so the advancing cursor is the only authoritative signal.
+    // posts/reposts. A bounded streak still has to stop: X can rotate opaque
+    // end cursors forever, which otherwise leaves the UI at 0件 indefinitely.
+    if (consecutiveEmptyPages >= MAX_CONSECUTIVE_EMPTY_PAGES) return null;
 
     seenCursors.add(next);
     cursor = next;

@@ -332,6 +332,17 @@ describe('fetchUserTweets', () => {
     expect(requestedCursors).toEqual(['', 'BRIDGE', 'OLD']);
   });
 
+  it('stops after a bounded streak of empty pages even when cursors keep changing', async () => {
+    pages[''] = { body: timeline([cursorEntry('E1')]) };
+    for (let index = 1; index <= 8; index += 1) {
+      pages[`E${index}`] = { body: timeline([cursorEntry(`E${index + 1}`)]) };
+    }
+
+    const tweets = await fetchUserTweets({ transport, screenName: 'me', pacing: NO_PACING });
+    expect(tweets).toEqual([]);
+    expect(requestedCursors).toEqual(['', 'E1', 'E2', 'E3', 'E4']);
+  });
+
   it("filters out other users' tweets that the timeline interleaves", async () => {
     pages[''] = {
       body: timeline([

@@ -23,6 +23,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
   const [filesRead, setFilesRead] = useState<string[]>([]);
   const [skipped, setSkipped] = useState<{ file: string; reason: string }[]>([]);
   const [fetched, setFetched] = useState<number | null>(null);
+  const [fetchStage, setFetchStage] = useState<string | null>(null);
 
   const unsubRef = useRef<(() => void) | null>(null);
   useEffect(() => () => unsubRef.current?.(), []);
@@ -53,6 +54,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
     setFilesRead([]);
     setSkipped([]);
     setFetched(0);
+    setFetchStage('取得を開始しています…');
     try {
       const parsed = Number.parseInt(max, 10);
       const { jobId } = await api.startLiveFetch(
@@ -65,6 +67,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
           api.liveEventsUrl(jobId),
           (ev) => {
             setFetched(ev.fetched);
+            setFetchStage(`${ev.operation ?? '取得中'}・${ev.cursorPage}ページ`);
             if (ev.error) {
               unsubRef.current?.();
               reject(new Error(ev.error));
@@ -89,6 +92,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
     } finally {
       unsubRef.current = null;
       setBusy(false);
+      setFetchStage(null);
     }
   }
 
@@ -127,7 +131,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
         <button type="button" className="btn btn--primary" onClick={loadLive} disabled={busy || !connected}>
           {busy ? 'まとめて取得中…' : 'ポストといいねを取得'}
         </button>
-        {busy && fetched !== null && <span className="live-count">取得中… {fetched}件</span>}
+        {busy && fetched !== null && <span className="live-count">取得中… {fetched}件{fetchStage ? `（${fetchStage}）` : ''}</span>}
       </div>
       {!connected && <p className="inline-msg inline-msg--waiting">Xへの接続が完了すると取得できます。</p>}
       <p className="hint">Xから自分のポストを取得したあと、いいねした投稿も続けて取得します。取得件数はそれぞれに適用されます。</p>
