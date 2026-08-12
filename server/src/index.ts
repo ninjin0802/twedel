@@ -1,6 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import express from 'express';
 import type { Express } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { config } from './config.js';
@@ -14,6 +15,39 @@ import { sessionRouter } from './routes/session.js';
 import { tweetsRouter } from './routes/tweets.js';
 import { getSession } from './x/session.js';
 
+const LOOPBACK_HOST = /^(127\.0\.0\.1|localhost)(:\d+)?$/i;
+
+export function localOnly(req: Request, res: Response, next: NextFunction): void {
+  const host = req.headers.host ?? '';
+  if (!LOOPBACK_HOST.test(host)) {
+    res.status(403).json({ error: 'Local access only.' });
+    return;
+  }
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      const url = new URL(origin);
+      if (!LOOPBACK_HOST.test(url.host) || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
+        res.status(403).json({ error: 'Cross-origin access denied.' });
+        return;
+      }
+    } catch {
+      res.status(403).json({ error: 'Cross-origin access denied.' });
+      return;
+    }
+  }
+  next();
+}
+
+function securityHeaders(_req: Request, res: Response, next: NextFunction): void {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
+  next();
+}
+
 /**
  * Build the Express app.
  *
@@ -22,6 +56,10 @@ import { getSession } from './x/session.js';
  */
 export function createApp(): Express {
   const app = express();
+
+  app.disable('x-powered-by');
+  app.use(localOnly);
+  app.use(securityHeaders);
 
   // Archives can produce very large JSON bodies (an id list for a 100k-tweet
   // account is a few MB on its own).

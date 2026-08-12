@@ -12,11 +12,6 @@ function envInt(name: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-function envStr(name: string, fallback: string): string {
-  const raw = process.env[name];
-  return raw === undefined || raw.trim() === '' ? fallback : raw;
-}
-
 function envIntList(name: string, fallback: number[]): number[] {
   const raw = process.env[name];
   if (raw === undefined || raw.trim() === '') return fallback;
@@ -30,10 +25,10 @@ function envIntList(name: string, fallback: number[]): number[] {
 export const config = {
   /** TWEDEL_PORT */
   port: envInt('TWEDEL_PORT', 5174),
-  /** TWEDEL_HOST - loopback only by design; do not bind 0.0.0.0 */
-  host: envStr('TWEDEL_HOST', '127.0.0.1'),
+  /** Fixed loopback binding: credentials and destructive routes must never reach the LAN. */
+  host: '127.0.0.1',
   /** TWEDEL_DATA_DIR - absolute; holds session cookies + run logs */
-  dataDir: resolve(envStr('TWEDEL_DATA_DIR', resolve(repoRoot, 'data'))),
+  dataDir: resolve(process.env['TWEDEL_DATA_DIR']?.trim() || resolve(repoRoot, 'data')),
 
   /** Pacing: random human-ish delay between deletions. */
   minDelayMs: envInt('TWEDEL_MIN_DELAY_MS', 800),

@@ -1,6 +1,6 @@
 {
   "name": "twedel",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "author": "ninjin",
   "private": true,
   "type": "module",
@@ -40,7 +40,7 @@
     "@vitejs/plugin-react": "^6.0.5",
     "adm-zip": "^0.6.0",
     "concurrently": "^10.0.4",
-    "electron": "^37.2.6",
+    "electron": "^43.4.0",
     "electron-builder": "^26.0.12",
     "esbuild": "^0.28.2",
     "msw": "^2.15.0",
@@ -72,10 +72,12 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true
     },
-    "publish": [{
-      "provider": "github",
-      "owner": "ninjin0802",
-      "repo": "twedel"
-    }]
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ninjin0802",
+        "repo": "twedel"
+      }
+    ]
   }
 }

@@ -4,7 +4,7 @@ import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import type { Server } from 'node:http';
+import { request as httpRequest, type Server } from 'node:http';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { DeleteLogEntry, ProgressEvent, Tweet } from '../../../shared/types.js';
 import { CHECKPOINT_VERSION, checkpointFile, resetRuns, startRun, waitForRun } from '../deleteRunner.js';
@@ -63,6 +63,18 @@ async function del(path: string): Promise<Response> {
 
 async function json<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
+}
+
+async function statusWithHost(host: string): Promise<number> {
+  const url = new URL(`${base}/api/health`);
+  return new Promise((resolveStatus, reject) => {
+    const req = httpRequest({ hostname: url.hostname, port: url.port, path: url.pathname, headers: { host } }, (res) => {
+      res.resume();
+      resolveStatus(res.statusCode ?? 0);
+    });
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 /**
@@ -131,7 +143,16 @@ describe('GET /api/health', () => {
   it('answers ok', async () => {
     const res = await get('/api/health');
     expect(res.status).toBe(200);
-    expect(await json(res)).toEqual({ ok: true, version: '0.5.1' });
+    expect(await json(res)).toEqual({ ok: true, version: '0.5.2' });
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('x-frame-options')).toBe('DENY');
+    expect(res.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
+  });
+
+  it('rejects non-loopback hosts and origins', async () => {
+    expect(await statusWithHost('example.com')).toBe(403);
+    const badOrigin = await fetch(`${base}/api/health`, { headers: { origin: 'https://evil.example' } });
+    expect(badOrigin.status).toBe(403);
   });
 });
 

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, session } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { readFile, rm, writeFile } = require('node:fs/promises');
 const { basename, dirname, join, resolve } = require('node:path');
@@ -115,6 +115,10 @@ async function createWindow() {
     },
   });
   mainWindow = win;
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('http://127.0.0.1:5174/')) event.preventDefault();
+  });
 
   for (let attempt = 0; attempt < 50; attempt += 1) {
     try {
@@ -128,6 +132,7 @@ async function createWindow() {
 
 app.whenReady().then(async () => {
   try {
+    session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
     configureUpdater();
     await startBackend();
     await createWindow();
