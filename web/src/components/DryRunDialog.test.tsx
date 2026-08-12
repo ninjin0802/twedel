@@ -41,19 +41,19 @@ describe('DryRunDialog - likes wording', () => {
     expect(html).toContain('いいね解除');
     expect(html).toContain('いいねを解除する');
     // The un-like path must NOT show the tweet-deletion banner.
-    expect(html).not.toContain('削除されたツイートは X から復元できません');
+    expect(html).not.toContain('削除されたポストは X から復元できません');
   });
 
   it('keeps the plain delete wording for a tweets-only selection', () => {
     const html = render([tweet({ id: '1' }), tweet({ id: '2' })]);
     expect(html).toContain('削除する');
-    expect(html).toContain('削除されたツイートは X から復元できません');
+    expect(html).toContain('削除されたポストは X から復元できません');
     expect(html).not.toContain('いいね解除');
   });
 
   it('breaks a mixed selection down into tweets vs likes', () => {
     const html = render([tweet({ id: '1' }), like('2'), like('3')]);
-    expect(html).toContain('ツイート');
+    expect(html).toContain('ポスト');
     expect(html).toContain('いいね');
     // The mixed note calls out that the likes are un-liked, not deleted.
     expect(html).toContain('いいね解除');

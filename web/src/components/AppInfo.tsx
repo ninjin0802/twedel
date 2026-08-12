@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.4.6',
+    title: '更新安定性と表記の改善',
+    changes: ['更新後のキャッシュ削除がファイルロックで起動を妨げないよう修正', '画面上の名称を「ポスト」「返信」「リポスト」に統一'],
+  },
+  {
     version: '0.4.5',
     title: '更新ダウンロード表示の改善',
     changes: ['更新パッケージのダウンロード率をプログレスバーで表示', '進捗率をバー中央にパーセント表示', '一時的な進捗ストリーム切断メッセージを非表示化'],
@@ -54,14 +59,14 @@ export const RELEASES = [
   {
     version: '0.1.0',
     title: 'Windowsアプリ初版',
-    changes: ['Electron版を追加', 'Windowsインストーラーに対応', '削除済みツイートのログ保存を廃止'],
+    changes: ['Electron版を追加', 'Windowsインストーラーに対応', '削除済みポストのログ保存を廃止'],
   },
 ] as const;
 
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.4.5'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.4.6'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -102,7 +107,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.4.5'}</p>
+        <p className="version-number">Version {version ?? '0.4.6'}</p>
         <p>Developer: ninjin</p>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>

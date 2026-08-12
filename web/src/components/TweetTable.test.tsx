@@ -5,7 +5,7 @@ import { badgeOf } from './TweetTable';
 /**
  * The table virtualizes its rows (no rows render without a real scroll element,
  * so `react-dom/server` shows an empty body), so the chip is asserted through the
- * pure `badgeOf` helper the rows use - the same chip system as 原文/リプライ/RT.
+ * pure `badgeOf` helper the rows use - the same chip system as ポスト/返信/リポスト.
  */
 function tweet(over: Partial<Tweet> & { id: string }): Tweet {
   return {
@@ -29,17 +29,17 @@ describe('badgeOf', () => {
     expect(badge.className).toContain('badge--like');
   });
 
-  it('never mislabels a like as 原文, even when other flags are set', () => {
+  it('never mislabels a like as ポスト, even when other flags are set', () => {
     // A liked tweet that happens to be a retweet is still just a like.
     const badge = badgeOf(tweet({ id: '1', isLike: true, isRetweet: true }));
     expect(badge.label).toBe('いいね');
-    expect(badge.label).not.toBe('原文');
-    expect(badge.label).not.toBe('RT');
+    expect(badge.label).not.toBe('ポスト');
+    expect(badge.label).not.toBe('リポスト');
   });
 
   it('keeps the existing chips for ordinary rows', () => {
-    expect(badgeOf(tweet({ id: '1' })).label).toBe('原文');
-    expect(badgeOf(tweet({ id: '2', isReply: true })).label).toBe('リプライ');
-    expect(badgeOf(tweet({ id: '3', isRetweet: true })).label).toBe('RT');
+    expect(badgeOf(tweet({ id: '1' })).label).toBe('ポスト');
+    expect(badgeOf(tweet({ id: '2', isReply: true })).label).toBe('返信');
+    expect(badgeOf(tweet({ id: '3', isRetweet: true })).label).toBe('リポスト');
   });
 });

@@ -53,7 +53,7 @@ export function ResumeBanner({ runs, onResumed, onDiscarded }: Props) {
     const confirmed = window.confirm(
       `残り ${run.remaining.toLocaleString()} 件の削除予定を破棄します。\n` +
         'この続きは二度と再開できません。よろしいですか？\n\n' +
-        '（すでに削除されたツイートの記録は削除ログに残ります）',
+        '（すでに削除されたポストの記録は削除ログに残ります）',
     );
     if (!confirmed) return;
 
@@ -110,8 +110,8 @@ export function ResumeBanner({ runs, onResumed, onDiscarded }: Props) {
       {error && <p className="inline-msg inline-msg--error">{error}</p>}
 
       <p className="hint">
-        再開すると、中断した続きだけを削除します。すでに削除済みのツイートに再度削除を試みることは
-        ありません。サーバーを再起動していても、記録済みの本文とリツイート種別から続行できます。
+        再開すると、中断した続きだけを削除します。すでに削除済みのポストに再度削除を試みることは
+        ありません。サーバーを再起動していても、記録済みの本文とリポスト種別から続行できます。
       </p>
     </section>
   );

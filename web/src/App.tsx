@@ -41,7 +41,7 @@ export function deleteButtonState(gate: DeleteGate): { disabled: boolean; title?
     return { disabled: true, title: '絞り込み条件の日付を修正してください' };
   }
   if (gate.selectedCount === 0) {
-    return { disabled: true, title: '削除するツイートを選択してください' };
+    return { disabled: true, title: '削除するポストを選択してください' };
   }
   return { disabled: false };
 }
@@ -273,11 +273,11 @@ export function App() {
           <span className="app__mark" aria-hidden="true"><img src="/icon.png" alt="" /></span>
           <div>
             <h1>twedel</h1>
-            <p className="tagline">自分のツイートを一括削除するローカル専用ツール</p>
+            <p className="tagline">自分のポストを一括削除するローカル専用ツール</p>
           </div>
         </div>
         <div className="app__status">
-          <span className="app-version">v{version ?? '0.4.5'}</span>
+          <span className="app-version">v{version ?? '0.4.6'}</span>
         </div>
       </header>
 

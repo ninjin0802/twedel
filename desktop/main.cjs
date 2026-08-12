@@ -37,7 +37,7 @@ async function cleanupInstalledUpdate() {
   const expectedUpdaterDir = resolve(localAppData, 'twedel-updater');
   if (basename(pendingDir).toLowerCase() !== 'pending' || updaterDir.toLowerCase() !== expectedUpdaterDir.toLowerCase()) return;
 
-  await rm(pendingDir, { recursive: true, force: true });
+  await rm(pendingDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 1000 });
   await rm(cleanupMarkerFile(), { force: true });
 }
 
@@ -113,10 +113,12 @@ async function createWindow() {
 
 app.whenReady().then(async () => {
   try {
-    await cleanupInstalledUpdate();
     configureUpdater();
     await startBackend();
     await createWindow();
+    // The NSIS process can still hold the downloaded installer immediately
+    // after relaunch. Clean it later and never let a locked cache block startup.
+    setTimeout(() => void cleanupInstalledUpdate().catch(() => undefined), 15000);
     if (app.isPackaged) setTimeout(() => void autoUpdater.checkForUpdates(), 3000);
   } catch (error) {
     dialog.showErrorBox('twedel', error instanceof Error ? error.message : String(error));

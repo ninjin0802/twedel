@@ -111,8 +111,8 @@ export function FilterBar({ criteria, onChange, countsReliable, errors = [] }: P
 
       {!countsReliable && (
         <p className="inline-msg inline-msg--warn" role="note">
-          いいね／RT 数での絞り込みは使えません。X のアーカイブは実際の数に関係なく
-          <code>"0"</code> / <code>"0.0"</code> を記録するため、これで絞り込むと意図しないツイートを
+          いいね／リポスト数での絞り込みは使えません。X のアーカイブは実際の数に関係なく
+          <code>"0"</code> / <code>"0.0"</code> を記録するため、これで絞り込むと意図しないポストを
           削除してしまいます。件数で絞りたい場合は「ライブ取得」を使ってください。
         </p>
       )}
@@ -124,7 +124,7 @@ export function FilterBar({ criteria, onChange, countsReliable, errors = [] }: P
             checked={criteria.includeOriginals}
             onChange={(e) => patch({ includeOriginals: e.target.checked })}
           />
-          原文
+          ポスト
         </label>
         <label className="check">
           <input
@@ -132,7 +132,7 @@ export function FilterBar({ criteria, onChange, countsReliable, errors = [] }: P
             checked={criteria.includeReplies}
             onChange={(e) => patch({ includeReplies: e.target.checked })}
           />
-          リプライ
+          返信
         </label>
         <label className="check">
           <input
@@ -140,7 +140,7 @@ export function FilterBar({ criteria, onChange, countsReliable, errors = [] }: P
             checked={criteria.includeRetweets}
             onChange={(e) => patch({ includeRetweets: e.target.checked })}
           />
-          リツイート
+          リポスト
         </label>
         <label className="check">
           <input

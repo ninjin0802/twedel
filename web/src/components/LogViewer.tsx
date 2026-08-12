@@ -77,7 +77,7 @@ export function LogViewer() {
           <thead>
             <tr>
               <th>日時</th>
-              <th>ツイート日</th>
+              <th>投稿日</th>
               <th>種別</th>
               <th>状態</th>
               <th>本文 / エラー</th>
@@ -95,7 +95,7 @@ export function LogViewer() {
               <tr key={`${entry.runId}:${entry.id}:${entry.at}`}>
                 <td className="nowrap">{entry.at.replace('T', ' ').slice(0, 19)}</td>
                 <td className="nowrap">{entry.createdAt.slice(0, 10)}</td>
-                <td className="nowrap">{entry.isRetweet ? 'RT' : 'ツイート'}</td>
+                <td className="nowrap">{entry.isRetweet ? 'リポスト' : 'ポスト'}</td>
                 <td className="nowrap">
                   <span className={`badge badge--status badge--${entry.status}`}>
                     {STATUS_LABEL[entry.status]}

@@ -14,16 +14,16 @@ const ROW_HEIGHT = 40;
 
 export function badgeOf(tweet: Tweet): { label: string; className: string } {
   const category = categoryOf(tweet);
-  // A like must NEVER be labelled 原文: it is someone else's tweet the account
+  // A like must NEVER be labelled ポスト: it is someone else's post the account
   // favorited, not one of its own posts. Checked first, matching categoryOf.
   if (category === 'like') return { label: 'いいね', className: 'badge badge--like' };
-  if (category === 'retweet') return { label: 'RT', className: 'badge badge--rt' };
-  if (category === 'reply') return { label: 'リプライ', className: 'badge badge--reply' };
-  return { label: '原文', className: 'badge badge--original' };
+  if (category === 'retweet') return { label: 'リポスト', className: 'badge badge--rt' };
+  if (category === 'reply') return { label: '返信', className: 'badge badge--reply' };
+  return { label: 'ポスト', className: 'badge badge--original' };
 }
 
 const UNRELIABLE_TITLE =
-  'この取得元ではいいね／RT の正確な数値がありません（X のアーカイブは常に 0 で記録されます）。';
+  'この取得元ではいいね／リポストの正確な数値がありません（X のアーカイブは常に0で記録されます）。';
 
 function renderCount(value: number | null, reliable: boolean) {
   if (!reliable) {
@@ -77,7 +77,7 @@ export function TweetTable({ tweets, selectedIds, onToggle, onSelectAll }: Props
         <span className="table__cell table__cell--type">種別</span>
         <span className="table__cell table__cell--text">本文</span>
         <span className="table__cell table__cell--num">いいね</span>
-        <span className="table__cell table__cell--num">RT</span>
+        <span className="table__cell table__cell--num">リポスト</span>
       </div>
 
       <div className="table__counter">
@@ -86,7 +86,7 @@ export function TweetTable({ tweets, selectedIds, onToggle, onSelectAll }: Props
 
       <div className="table__body" ref={scrollRef}>
         {tweets.length === 0 ? (
-          <p className="table__empty">条件に一致するツイートがありません。</p>
+          <p className="table__empty">条件に一致するポストがありません。</p>
         ) : (
           <div className="table__spacer" style={{ height: virtualizer.getTotalSize() }}>
             {virtualizer.getVirtualItems().map((row) => {

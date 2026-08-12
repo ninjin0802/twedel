@@ -14,9 +14,9 @@ function render(): string {
 }
 
 describe('SourcePanel - source selector', () => {
-  it('offers a 自分のツイート / いいね selector', () => {
+  it('offers a 自分のポスト / いいね selector', () => {
     const html = render();
-    expect(html).toContain('自分のツイート');
+    expect(html).toContain('自分のポスト');
     expect(html).toContain('いいね');
     expect(html).toContain('読み込む対象');
   });
@@ -26,11 +26,11 @@ describe('SourcePanel - source selector', () => {
     expect(html).toContain('ライブ取得');
   });
 
-  it('defaults to 自分のツイート (its radio is checked, いいね is not)', () => {
+  it('defaults to 自分のポスト (its radio is checked, いいね is not)', () => {
     const html = render();
     // Exactly one checked radio, and it is the tweets one (rendered first).
     const checkedCount = (html.match(/checked=""|checked>/g) ?? []).length;
     expect(checkedCount).toBeGreaterThanOrEqual(1);
-    expect(html.indexOf('自分のツイート')).toBeLessThan(html.indexOf('いいね'));
+    expect(html.indexOf('自分のポスト')).toBeLessThan(html.indexOf('いいね'));
   });
 });

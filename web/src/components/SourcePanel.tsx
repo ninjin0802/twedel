@@ -122,7 +122,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
             disabled={busy}
             onChange={() => setSource('tweets')}
           />
-          <span>自分のツイート</span>
+          <span>自分のポスト</span>
         </label>
         <label className="field field--inline">
           <input
@@ -157,7 +157,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
       <p className="hint">
         {isLikes
           ? 'X の API からいいねした投稿を直接取得します。これらは「削除」ではなくいいね解除の対象です（①で認証が必要です）。'
-          : 'X の API から最新のツイートを直接取得します（①で認証が必要です）。'}
+          : 'X の API から最新のポストを直接取得します（①で認証が必要です）。'}
       </p>
 
       {/* Archive import + sample data: secondary, tucked away but fully functional. */}
@@ -182,7 +182,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
           X からダウンロードした ZIP か展開済みフォルダを指定します。
           {isLikes
             ? '「いいね」を選択中は data/like.js を読み込みます。アーカイブのいいねには日時が記録されないため、期間では絞り込めません。'
-            : '全期間のツイートを扱える唯一の方法ですが、いいね／RT 数は 0 で記録されるため、その 2 つでは絞り込めません。'}
+            : '全期間のポストを扱える唯一の方法ですが、いいね／リポスト数は 0 で記録されるため、その2つでは絞り込めません。'}
         </p>
         <p className="hint">
           バックエンド未接続でも画面を確認できます:{' '}
@@ -219,7 +219,7 @@ export function SourcePanel({ tweets, onTweets, connected = false }: Props) {
           ) : (
             <>
               {' '}
-              / 原文 {stats.originals.toLocaleString()} ・ リプライ {stats.replies.toLocaleString()} ・ RT{' '}
+              / 通常ポスト {stats.originals.toLocaleString()} ・ 返信 {stats.replies.toLocaleString()} ・ リポスト{' '}
               {stats.retweets.toLocaleString()}
             </>
           )}{' '}

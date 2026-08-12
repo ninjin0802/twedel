@@ -56,7 +56,7 @@ export function DryRunDialog({ tweets, busy, error, onCancel, onConfirm }: Props
           </p>
         ) : (
           <p className="danger-banner">
-            この操作は取り消せません。削除されたツイートは X から復元できません。
+            この操作は取り消せません。削除されたポストは X から復元できません。
           </p>
         )}
 
@@ -74,13 +74,13 @@ export function DryRunDialog({ tweets, busy, error, onCancel, onConfirm }: Props
                 <>いいね {likeCount.toLocaleString()}</>
               ) : mixed ? (
                 <>
-                  ツイート {tweetCount.toLocaleString()}（原文 {stats.originals.toLocaleString()} / リプライ{' '}
-                  {stats.replies.toLocaleString()} / RT {stats.retweets.toLocaleString()}） / いいね{' '}
+                  ポスト {tweetCount.toLocaleString()}（通常ポスト {stats.originals.toLocaleString()} / 返信{' '}
+                  {stats.replies.toLocaleString()} / リポスト {stats.retweets.toLocaleString()}） / いいね{' '}
                   {likeCount.toLocaleString()}
                 </>
               ) : (
                 <>
-                  原文 {stats.originals.toLocaleString()} / リプライ {stats.replies.toLocaleString()} / RT{' '}
+                  通常ポスト {stats.originals.toLocaleString()} / 返信 {stats.replies.toLocaleString()} / リポスト{' '}
                   {stats.retweets.toLocaleString()}
                 </>
               )}
@@ -103,8 +103,8 @@ export function DryRunDialog({ tweets, busy, error, onCancel, onConfirm }: Props
 
         {!allLikes && stats.retweets > 0 && (
           <p className="inline-msg inline-msg--warn">
-            リツイート {stats.retweets.toLocaleString()} 件が含まれています。これらは「削除」ではなく
-            リツイートの取り消し (un-retweet) として処理されます。元の投稿者のツイートは残ります。
+            リポスト {stats.retweets.toLocaleString()} 件が含まれています。これらは「削除」ではなく
+            リポストの取り消しとして処理されます。元の投稿者のポストは残ります。
           </p>
         )}
 
