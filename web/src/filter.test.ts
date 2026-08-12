@@ -306,9 +306,10 @@ describe('applyFilter', () => {
     expect(kept.map((t) => t.id)).toEqual(['b', 'c']);
   });
 
-  it('defaults exclude retweets', () => {
+  it('includes retweets by default', () => {
     const tweets = [tweet({ id: 'a' }), tweet({ id: 'rt', isRetweet: true })];
-    expect(applyFilter(tweets, DEFAULT_CRITERIA).map((t) => t.id)).toEqual(['a']);
+    expect(DEFAULT_CRITERIA.includeRetweets).toBe(true);
+    expect(applyFilter(tweets, DEFAULT_CRITERIA).map((t) => t.id)).toEqual(['a', 'rt']);
   });
 });
 

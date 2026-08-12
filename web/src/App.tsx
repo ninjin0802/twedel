@@ -334,7 +334,7 @@ export function App() {
               <option value="system">システム</option><option value="light">ライト</option><option value="dark">ダーク</option>
             </select>
           </label>
-          <span className="sidebar-version">Version {version ?? '0.5.0'}</span>
+          <span className="sidebar-version">Version {version ?? '0.5.1'}</span>
         </div>
       </aside>
 
@@ -352,10 +352,6 @@ export function App() {
         <div className="page-heading">
           <h1>{currentPage.title}</h1>
           <p>{currentPage.description}</p>
-        </div>
-        <div className="app__status">
-          <span className={`connection-dot connection-dot--${health}`} aria-hidden="true" />
-          <span>{health === 'online' ? 'ローカル接続済み' : health === 'checking' ? '確認中' : '未接続'}</span>
         </div>
       </header>
 

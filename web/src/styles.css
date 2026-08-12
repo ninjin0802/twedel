@@ -1205,10 +1205,6 @@ body {
 .page-heading { flex: 1; }
 .page-heading h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.025em; }
 .page-heading p { margin: .18rem 0 0; color: var(--muted); font-size: .8rem; }
-.app__status { display: flex; align-items: center; gap: .45rem; color: var(--muted); font-size: .75rem; font-weight: 650; }
-.connection-dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 4px color-mix(in srgb, var(--muted) 12%, transparent); }
-.connection-dot--online { background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 14%, transparent); }
-.connection-dot--offline { background: var(--danger); }
 .menu-button { display: none; }
 .app-content { width: min(100%, var(--content-max)); margin: 0 auto; padding: 1.7rem 2rem 5rem; }
 
@@ -1247,7 +1243,7 @@ input, select, textarea { min-height: 2.45rem; border-radius: .65rem !important;
 @media (max-width: 44rem) {
   .app__head { min-height: 4.5rem; padding: .8rem 1rem; }
   .app-content { padding: 1rem .85rem 4rem; }
-  .page-heading p, .app__status span:not(.connection-dot) { display: none; }
+  .page-heading p { display: none; }
   .workflow { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: .8rem .6rem; }
   .workflow li { justify-content: center; }
   .workflow li strong { display: none; }

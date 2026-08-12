@@ -20,7 +20,7 @@ export const DEFAULT_CRITERIA: FilterCriteria = {
   maxRetweets: null,
   includeOriginals: true,
   includeReplies: true,
-  includeRetweets: false,
+  includeRetweets: true,
   includeMediaTweets: true,
 };
 
