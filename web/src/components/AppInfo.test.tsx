@@ -8,6 +8,7 @@ describe('AppInfo', () => {
     expect(html).toContain('Version 0.4.1');
     expect(html).toContain('Developer: ninjin');
     expect(html).toContain('更新を確認');
+    expect(RELEASES[0].changes).toContain('起動時に新しいバージョンがある場合はアプリ内へ通知');
     expect(html).toContain('削除した投稿の履歴ログは保存しません');
   });
 

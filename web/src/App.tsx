@@ -281,6 +281,19 @@ export function App() {
         </div>
       </header>
 
+      {(updateState.status === 'available' || updateState.status === 'downloaded') && (
+        <div className="update-banner" role="status">
+          <span>
+            {updateState.status === 'available'
+              ? `新しいバージョン v${updateState.version} があります。`
+              : `v${updateState.version} の更新準備ができました。`}
+          </span>
+          <button type="button" className="btn btn--primary" onClick={() => navigate('about')}>
+            確認する
+          </button>
+        </div>
+      )}
+
       {menuOpen && (
         <>
           <button className="menu-backdrop" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)} />
