@@ -4,8 +4,8 @@ import { AppInfo, RELEASES } from './AppInfo';
 
 describe('AppInfo', () => {
   it('shows the running version on the about page', () => {
-    const html = renderToStaticMarkup(<AppInfo page="about" version="0.11.3" />);
-    expect(html).toContain('Version 0.11.3');
+    const html = renderToStaticMarkup(<AppInfo page="about" version="0.11.4" />);
+    expect(html).toContain('Version 0.11.4');
     expect(html).toContain('Developer');
     expect(html).toContain('ninjin');
     expect(html).toContain('自分でも安心して使える、シンプルで便利なツール');
@@ -21,16 +21,16 @@ describe('AppInfo', () => {
 
   it('shows release notes newest first', () => {
     const html = renderToStaticMarkup(<AppInfo page="updates" version="0.4.0" />);
-    expect(RELEASES[0].version).toBe('0.11.3');
-    expect(RELEASES[0].changes).toContain('バージョン情報へ開発者ninjinのアイコンとプロフィールを追加');
-    expect(html.indexOf('v0.11.3')).toBeLessThan(html.indexOf('v0.11.2'));
+    expect(RELEASES[0].version).toBe('0.11.4');
+    expect(RELEASES[0].changes).toContain('CI・最新版・Windows・64-bit・MIT Licenseのバッジを追加');
+    expect(html.indexOf('v0.11.4')).toBeLessThan(html.indexOf('v0.11.3'));
     expect(html).not.toContain('>更新を確認</button>');
     expect(html).toContain('ハンバーガーメニューを追加');
     expect(html).toContain('削除完了後に対象を一覧から自動で取り除く');
   });
 
   it('shows an accessible progress bar while downloading an update', () => {
-    const html = renderToStaticMarkup(<AppInfo page="about" version="0.11.3" updateState={{ status: 'downloading', percent: 42 }} />);
+    const html = renderToStaticMarkup(<AppInfo page="about" version="0.11.4" updateState={{ status: 'downloading', percent: 42 }} />);
     expect(html).toContain('role="progressbar"');
     expect(html).toContain('aria-valuenow="42"');
     expect(html).toContain('width:42%');

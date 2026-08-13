@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.11.4',
+    title: 'READMEを全面リニューアル',
+    changes: ['初めての利用者がダウンロードと使い方へ迷わず進める構成へ変更', 'CI・最新版・Windows・64-bit・MIT Licenseのバッジを追加', '機能・動作環境・安全性を表と短い説明で整理', '支援案内と開発者プロフィールを見やすく再配置'],
+  },
+  {
     version: '0.11.3',
     title: '開発者プロフィールと支援案内を追加',
     changes: ['バージョン情報へ開発者ninjinのアイコンとプロフィールを追加', 'READMEへOFUSEの支援リンクを追加', '支援金の用途と、支援による機能差がないことを明記'],
@@ -163,7 +168,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.11.3'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.11.4'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -210,7 +215,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.11.3'}</p>
+        <p className="version-number">Version {version ?? '0.11.4'}</p>
         <article className="developer-profile" aria-label="開発者プロフィール">
           <img src="/developer-ninjin.jpg" alt="開発者 ninjinのアイコン" />
           <div>
