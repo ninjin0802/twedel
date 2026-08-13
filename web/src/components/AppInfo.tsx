@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.11.3',
+    title: '開発者プロフィールと支援案内を追加',
+    changes: ['バージョン情報へ開発者ninjinのアイコンとプロフィールを追加', 'READMEへOFUSEの支援リンクを追加', '支援金の用途と、支援による機能差がないことを明記'],
+  },
+  {
     version: '0.11.2',
     title: 'OFUSEによる任意支援を追加',
     changes: ['バージョン情報ページへ「開発を支援する」を追加', '支援ページをOSの標準ブラウザで安全に表示', '支援の有無による機能差がないことを明記'],
@@ -158,7 +163,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.11.2'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.11.3'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -205,8 +210,15 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.11.2'}</p>
-        <p>Developer: ninjin</p>
+        <p className="version-number">Version {version ?? '0.11.3'}</p>
+        <article className="developer-profile" aria-label="開発者プロフィール">
+          <img src="/developer-ninjin.jpg" alt="開発者 ninjinのアイコン" />
+          <div>
+            <span className="developer-profile__role">Developer</span>
+            <h3>ninjin</h3>
+            <p>twedelを個人開発しています。「自分でも安心して使える、シンプルで便利なツール」を目指して、改善とメンテナンスを続けています。</p>
+          </div>
+        </article>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>
         <div className="support-card">

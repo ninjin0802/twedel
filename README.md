@@ -10,6 +10,16 @@
 
 Releaseページの「Assets」から、`twedel-Setup-バージョン.exe`を選んでください。
 
+## ☕ 開発を応援する
+
+twedelは、これからもすべての機能を無料で利用できるオープンソースアプリです。
+
+「面倒だったポスト整理が少し楽になった」「今後の改善も楽しみ」と感じてもらえたら、コーヒー1杯分から開発を応援していただけるとうれしいです。いただいた支援は、動作検証や継続的なメンテナンス、新しい機能の開発に役立てます。
+
+### [OFUSEでtwedelの開発を応援する](https://ofuse.me/ninjin)
+
+支援はもちろん任意です。支援しなくても、機能やアップデートに違いはありません。
+
 ## Code signing policy
 
 Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
