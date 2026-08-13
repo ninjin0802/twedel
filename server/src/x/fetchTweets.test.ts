@@ -8,6 +8,7 @@ import type { FetchProgress } from './fetchTweets.js';
 import {
   fetchUserLikes,
   fetchUserTweets,
+  collectPinnedTweetIds,
   isUserRecommendationTimeline,
   normalizeTweet,
   parseTwitterDate,
@@ -96,6 +97,15 @@ function timeline(entries: unknown[]): Record<string, unknown> {
     },
   };
 }
+
+describe('pinned post detection', () => {
+  it('recognizes X profile-conversation entries without marking ordinary tweets', () => {
+    const pinned = entry({ id: 'pin-1' });
+    pinned['entryId'] = 'profile-conversation-pin-1';
+    const ids = collectPinnedTweetIds(timeline([pinned, entry({ id: 'normal-1' })]));
+    expect([...ids]).toEqual(['pin-1']);
+  });
+});
 
 interface PageReply {
   body: unknown;

@@ -11,6 +11,7 @@ import { SourcePanel } from './components/SourcePanel';
 import { TweetTable } from './components/TweetTable';
 import { DEFAULT_CRITERIA, applyFilter, hasUnreliableCounts, validateCriteria } from './filter';
 import { updates, type UpdateState } from './update';
+import { includePinnedPosts, protectionScope, readProtectedPosts, writeProtectedPosts } from './protection';
 
 type Health = 'checking' | 'online' | 'offline';
 type Page = 'main' | 'settings' | 'updates' | 'about';
@@ -92,6 +93,7 @@ export function App() {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [criteria, setCriteria] = useState<FilterCriteria>(DEFAULT_CRITERIA);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set<string>());
+  const [protectedIds, setProtectedIds] = useState<ReadonlySet<string>>(() => new Set<string>());
 
   const [dryRunOpen, setDryRunOpen] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -195,10 +197,16 @@ export function App() {
   const criteriaErrors = useMemo(() => validateCriteria(criteria), [criteria]);
   const criteriaValid = criteriaErrors.length === 0;
   const filtered = useMemo(() => applyFilter(tweets, criteria), [tweets, criteria]);
+  const accountScope = protectionScope(session?.userId, session?.screenName);
+
+  useEffect(() => {
+    try { setProtectedIds(readProtectedPosts(window.localStorage, accountScope)); }
+    catch { setProtectedIds(new Set()); }
+  }, [accountScope]);
 
   const selectedTweets = useMemo(
-    () => filtered.filter((t) => selectedIds.has(t.id)),
-    [filtered, selectedIds],
+    () => filtered.filter((t) => selectedIds.has(t.id) && !protectedIds.has(t.id)),
+    [filtered, selectedIds, protectedIds],
   );
 
   const deleteGate = deleteButtonState({
@@ -210,7 +218,12 @@ export function App() {
   const handleTweets = useCallback((next: Tweet[]) => {
     setTweets(next);
     setSelectedIds(new Set<string>());
-  }, []);
+    setProtectedIds((current) => {
+      const merged = includePinnedPosts(current, next);
+      try { writeProtectedPosts(window.localStorage, accountScope, merged); } catch {}
+      return merged;
+    });
+  }, [accountScope]);
 
   const handleSession = useCallback((next: SessionInfo | null) => {
     setSession(next);
@@ -221,11 +234,11 @@ export function App() {
   const toggleOne = useCallback((id: string, selected: boolean) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (selected) next.add(id);
+      if (selected && !protectedIds.has(id)) next.add(id);
       else next.delete(id);
       return next;
     });
-  }, []);
+  }, [protectedIds]);
 
   /** Select-all applies to the CURRENT filtered set only. */
   const toggleAll = useCallback(
@@ -233,14 +246,24 @@ export function App() {
       setSelectedIds((prev) => {
         const next = new Set(prev);
         for (const t of filtered) {
-          if (selected) next.add(t.id);
+          if (selected && !protectedIds.has(t.id)) next.add(t.id);
           else next.delete(t.id);
         }
         return next;
       });
     },
-    [filtered],
+    [filtered, protectedIds],
   );
+
+  const toggleProtection = useCallback((id: string, protect: boolean) => {
+    setProtectedIds((prev) => {
+      const next = new Set(prev);
+      if (protect) next.add(id); else next.delete(id);
+      try { writeProtectedPosts(window.localStorage, accountScope, next); } catch {}
+      return next;
+    });
+    if (protect) setSelectedIds((prev) => new Set([...prev].filter((selected) => selected !== id)));
+  }, [accountScope]);
 
   async function startRun() {
     // Deletion is irreversible: refuse outright rather than act on a filter
@@ -340,7 +363,7 @@ export function App() {
               <option value="system">システム</option><option value="light">ライト</option><option value="dark">ダーク</option>
             </select>
           </label>
-          <span className="sidebar-version">Version {version ?? '0.9.0'}</span>
+          <span className="sidebar-version">Version {version ?? '0.10.0'}</span>
         </div>
       </aside>
 
@@ -441,11 +464,17 @@ export function App() {
           </div>
         </header>
 
+        <p className="protection-note">
+          <span aria-hidden="true">🔒</span> 保護したポストは選択・削除されません。固定ポストはライブ取得時に自動保護されます。
+        </p>
+
         <TweetTable
           tweets={filtered}
           selectedIds={selectedIds}
+          protectedIds={protectedIds}
           onToggle={toggleOne}
           onSelectAll={toggleAll}
+          onProtect={toggleProtection}
         />
       </section>
 

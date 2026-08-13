@@ -798,7 +798,7 @@ input[type='checkbox'] {
 .table__head,
 .table__row {
   display: grid;
-  grid-template-columns: 2.4rem 6.5rem 9.5rem minmax(8rem, 1fr) 5rem 4.5rem;
+  grid-template-columns: 2.4rem 6.5rem 9.5rem minmax(8rem, 1fr) 5rem 4.5rem 3.5rem;
   align-items: center;
   gap: 0.5rem;
   padding: 0 0.65rem;
@@ -856,6 +856,10 @@ input[type='checkbox'] {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 .table__row.is-selected:hover { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.table__row.is-protected {
+  background: color-mix(in srgb, var(--ok) 7%, var(--surface));
+  box-shadow: inset 3px 0 0 var(--ok);
+}
 
 .table__cell { min-width: 0; }
 .table__cell--check { display: flex; align-items: center; }
@@ -863,6 +867,28 @@ input[type='checkbox'] {
 .table__cell--type { display: flex; gap: 0.28rem; overflow: hidden; }
 .table__cell--text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .table__cell--num { text-align: right; font-variant-numeric: tabular-nums; }
+.table__cell--protect { display: flex; justify-content: center; }
+.table__protected-count { color: var(--ok); font-weight: 650; }
+.protect-button {
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.protect-button:hover { border-color: var(--accent); color: var(--accent); }
+.protect-button.is-active { background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok); }
+.protection-note {
+  margin: -0.25rem 0 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--ok-border);
+  border-radius: var(--radius-sm);
+  background: var(--ok-bg);
+  color: var(--fg-2);
+  font-size: 0.82rem;
+}
 
 /* The unreliable-count "?" marker: a subtle, explained placeholder. */
 .count-unknown {

@@ -369,6 +369,25 @@ export function collectTweetNodes(body: unknown): Rec[] {
   return out;
 }
 
+/** IDs carried by X's special pinned-profile timeline entry. */
+export function collectPinnedTweetIds(body: unknown): Set<string> {
+  const ids = new Set<string>();
+  walk(body, (node) => {
+    const entryId = node['entryId'];
+    const entryType = getString(node, 'content.__typename') ?? getString(node, 'content.itemContent.itemType');
+    const pinned =
+      (typeof entryId === 'string' && (entryId.startsWith('profile-conversation-') || entryId.toLowerCase().includes('pinned'))) ||
+      (typeof entryType === 'string' && entryType.toLowerCase().includes('pinned'));
+    if (!pinned) return false;
+    for (const tweet of collectTweetNodes(node)) {
+      const id = getString(tweet, 'rest_id') ?? getString(tweet, 'legacy.id_str');
+      if (id) ids.add(id);
+    }
+    return true;
+  });
+  return ids;
+}
+
 /** X occasionally serves the user-recommendation module at a tweet endpoint. */
 export function isUserRecommendationTimeline(body: unknown): boolean {
   return deepFind(body, (node) => node['__typename'] === 'TimelineUser') !== null;
@@ -627,6 +646,7 @@ async function runTimelineOperation(
 
 
     let collectedNodes = collectTweetNodes(res.body);
+    const pinnedIds = collectPinnedTweetIds(res.body);
     // A successful GraphQL response can still be the wrong product surface:
     // observed live, X returned TimelineUser recommendation cards and cursors
     // for UserOriginalsTimeline. Refresh the operation id and retry once; never
@@ -660,7 +680,9 @@ async function runTimelineOperation(
       if (!run.keepForeignAuthors && authorIdOf(node) !== userId) continue;
       const normalized = normalizeTweet(node);
       if (!normalized) continue;
-      const tweet = run.markAsLike ? asLike(normalized) : normalized;
+      const tweet = run.markAsLike
+        ? asLike(normalized)
+        : (pinnedIds.has(normalized.id) ? { ...normalized, isPinned: true } : normalized);
       if (byId.has(tweet.id)) continue;
       byId.set(tweet.id, tweet);
       added += 1;
