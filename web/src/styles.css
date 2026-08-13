@@ -277,11 +277,20 @@ code {
   border-radius: var(--radius-lg);
   background: var(--surface-2);
   box-shadow: var(--shadow-sm);
+  width: 100%;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
 }
+.developer-profile:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow); }
+.developer-profile:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 2px; }
+.developer-profile:disabled { opacity: 1; cursor: default; }
 .developer-profile img { width: 5rem; height: 5rem; object-fit: cover; border-radius: 50%; border: 2px solid color-mix(in srgb, #f28aa8 55%, var(--border)); }
 .developer-profile__role { color: var(--accent); font-size: .72rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
-.developer-profile h3 { margin: .15rem 0 .35rem; font-size: 1.15rem; }
-.developer-profile p { margin: 0; color: var(--muted); font-size: .85rem; line-height: 1.65; }
+.developer-profile__name { display: block; margin: .15rem 0 .35rem; font-size: 1.15rem; font-weight: 700; }
+.developer-profile__description { display: block; color: var(--muted); font-size: .85rem; line-height: 1.65; }
+.developer-profile__link { display: inline-block; margin-top: .45rem; color: var(--accent); font-size: .8rem; font-weight: 700; }
 @media (max-width: 520px) { .developer-profile { grid-template-columns: 1fr; text-align: center; } .developer-profile img { margin-inline: auto; } }
 .support-card {
   margin: 1.25rem 0;

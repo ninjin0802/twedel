@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.11.5',
+    title: '開発者のXプロフィールを追加',
+    changes: ['READMEへ開発者のXアカウントを掲載', 'バージョン情報のプロフィールカードからXを標準ブラウザで開けるように変更', '固定リンク方式で任意URLの外部起動を防止'],
+  },
+  {
     version: '0.11.4',
     title: 'READMEを全面リニューアル',
     changes: ['初めての利用者がダウンロードと使い方へ迷わず進める構成へ変更', 'CI・最新版・Windows・64-bit・MIT Licenseのバッジを追加', '機能・動作環境・安全性を表と短い説明で整理', '支援案内と開発者プロフィールを見やすく再配置'],
@@ -168,7 +173,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.11.4'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.11.5'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -215,15 +220,22 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.11.4'}</p>
-        <article className="developer-profile" aria-label="開発者プロフィール">
+        <p className="version-number">Version {version ?? '0.11.5'}</p>
+        <button
+          type="button"
+          className="developer-profile"
+          aria-label="開発者ninjinのXプロフィールを標準ブラウザで開く"
+          onClick={() => void window.twedelExternal?.openDeveloperProfile()}
+          disabled={typeof window === 'undefined' || !window.twedelExternal}
+        >
           <img src="/developer-ninjin.jpg" alt="開発者 ninjinのアイコン" />
           <div>
             <span className="developer-profile__role">Developer</span>
-            <h3>ninjin</h3>
-            <p>twedelを個人開発しています。「自分でも安心して使える、シンプルで便利なツール」を目指して、改善とメンテナンスを続けています。</p>
+            <span className="developer-profile__name">ninjin</span>
+            <span className="developer-profile__description">twedelを個人開発しています。「自分でも安心して使える、シンプルで便利なツール」を目指して、改善とメンテナンスを続けています。</span>
+            <span className="developer-profile__link">X: @_nin82 ↗</span>
           </div>
-        </article>
+        </button>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>
         <div className="support-card">

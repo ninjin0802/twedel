@@ -13,6 +13,7 @@ interface UpdateBridge {
 }
 interface ExternalBridge {
   openSupportPage(): Promise<void>;
+  openDeveloperProfile(): Promise<void>;
 }
 declare global { interface Window { twedelUpdates?: UpdateBridge; twedelExternal?: ExternalBridge } }
 export const updates = typeof window === 'undefined' ? undefined : window.twedelUpdates;

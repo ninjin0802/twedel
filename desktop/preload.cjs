@@ -12,4 +12,5 @@ contextBridge.exposeInMainWorld('twedelUpdates', {
 });
 contextBridge.exposeInMainWorld('twedelExternal', {
   openSupportPage: () => ipcRenderer.invoke('external:open-support'),
+  openDeveloperProfile: () => ipcRenderer.invoke('external:open-developer-profile'),
 });

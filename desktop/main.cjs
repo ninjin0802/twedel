@@ -7,6 +7,7 @@ const { pathToFileURL } = require('node:url');
 let mainWindow;
 let updateState = { status: 'idle' };
 const SUPPORT_URL = 'https://ofuse.me/ninjin';
+const DEVELOPER_PROFILE_URL = 'https://x.com/_nin82';
 
 function cleanupMarkerFile() {
   return join(app.getPath('userData'), 'update-cleanup.json');
@@ -97,6 +98,7 @@ function configureExternalLinks() {
   // The renderer cannot provide an arbitrary URL. Keeping the destination in
   // the main process prevents a compromised page from opening phishing links.
   ipcMain.handle('external:open-support', () => shell.openExternal(SUPPORT_URL));
+  ipcMain.handle('external:open-developer-profile', () => shell.openExternal(DEVELOPER_PROFILE_URL));
 }
 
 async function startBackend() {

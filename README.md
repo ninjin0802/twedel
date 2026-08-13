@@ -120,7 +120,7 @@ twedelは、これからもすべての機能を無料で利用できるオー�
 <table>
 <tr>
 <td width="96"><img src="web/public/developer-ninjin.jpg" width="80" alt="開発者ninjinのアイコン"></td>
-<td><strong>ninjin</strong><br>twedelを個人開発しています。「自分でも安心して使える、シンプルで便利なツール」を目指して、改善とメンテナンスを続けています。</td>
+<td><strong>ninjin</strong> — <a href="https://x.com/_nin82">X: @_nin82</a><br>twedelを個人開発しています。「自分でも安心して使える、シンプルで便利なツール」を目指して、改善とメンテナンスを続けています。</td>
 </tr>
 </table>
 
