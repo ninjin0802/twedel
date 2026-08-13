@@ -1,7 +1,8 @@
 {
   "name": "twedel",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "author": "ninjin",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "description": "Windows desktop app for bulk-deleting your own tweets on X",

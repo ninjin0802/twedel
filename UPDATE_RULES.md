@@ -21,6 +21,9 @@
 10. Release のファイル名と `latest.yml` の参照先が一致し、自動アップデートでも取得できることを確認する。
 11. GitHub Release の本文はUTF-8のMarkdownファイルを用意し、`gh release create/edit --notes-file <file>` で登録する。コマンド引数へ改行エスケープを直接記述しない。
 12. 公開後にGitHub Releaseページを確認し、Markdownの見出し・箇条書き・改行が正しく表示され、`` `n `` などの制御文字が本文へ露出していないことを確認する。
+13. SignPath Foundation承認後は、GitHub-hosted runnerで生成された成果物だけを署名要求へ提出する。
+14. Authenticode署名が`Valid`でない成果物を、署名済みとして公開しない。
+15. 署名後のexeに対してblockmapと`latest.yml`を再生成し、そのハッシュ・サイズ・ファイル名を照合する。
 
 ## バージョン管理
 

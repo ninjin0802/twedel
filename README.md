@@ -10,6 +10,12 @@
 
 Releaseページの「Assets」から、`twedel-Setup-バージョン.exe`を選んでください。
 
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
+現在はSignPath Foundationへの申請準備中です。署名が有効になるまでは、Releaseページで未署名であることを明示します。ビルド元、署名対象、担当者、承認手順は[コード署名ポリシー](CODE_SIGNING_POLICY.md)で公開しています。
+
 ## 動作環境・必要なもの
 
 | 項目 | 必要条件 |
@@ -64,6 +70,8 @@ Google Chromeは、Xへのログインと認証情報の安全な取得に使用
 
 ## データとプライバシー
 
+詳細は[プライバシーポリシー](PRIVACY.md)をご覧ください。
+
 - 認証情報は利用中のPC内に保存されます。
 - 保存済みアカウントの認証情報は画面やローカルAPIから読み戻せず、切り替えには内部IDだけを使用します。
 - 「twedelから削除」と「アカウント設定をリセット」は端末内の保存情報だけを消します。Xのアカウント自体は削除しません。
@@ -110,5 +118,10 @@ Xがライブのタイムラインへ返さない古いデータは、Xからダ
 ソースコードからの起動方法、テスト、ビルド、構成については[開発ガイド](docs/DEVELOPMENT.md)をご覧ください。
 
 - Developer: ninjin
-- License: リポジトリ内のライセンス表記に従います
+- License: [MIT License](LICENSE)
+- [SignPath Foundation申請ガイド](docs/SIGNPATH_APPLICATION.md)
 - [更新時の必須ルール](UPDATE_RULES.md)
+
+## アンインストール
+
+Windowsの「設定」→「アプリ」→「インストールされているアプリ」から`twedel`を選び、「アンインストール」を実行してください。保存済みの認証情報も削除したい場合は、アンインストール前にアプリの「アカウント設定をリセット」を実行してください。

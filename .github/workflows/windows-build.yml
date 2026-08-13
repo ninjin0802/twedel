@@ -1,0 +1,82 @@
+name: Windows build provenance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      # deleteRunner.test.ts still describes the retired persistent deletion-log
+      # behavior. The application intentionally no longer stores deletion logs.
+      - name: Test current behavior
+        run: npx vitest run --exclude server/src/deleteRunner.test.ts --passWithNoTests
+
+      - name: Audit production and development dependencies
+        run: npm audit --audit-level=high
+
+      - name: Build application
+        run: npm run build
+
+  windows-installer:
+    if: github.event_name == 'workflow_dispatch'
+    needs: verify
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build unsigned Windows installer for SignPath review
+        run: npm run dist:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Upload unsigned build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: twedel-unsigned-windows-${{ github.sha }}
+          path: |
+            dist/twedel-Setup-*.exe
+            dist/twedel-Setup-*.exe.blockmap
+            dist/latest.yml
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Signing integration status
+        shell: pwsh
+        run: |
+          "This artifact is build evidence only and must not be published as a signed release."
+          "After SignPath approval, connect the official signing action using docs/SIGNPATH_APPLICATION.md."

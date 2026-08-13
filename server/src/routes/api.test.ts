@@ -143,7 +143,7 @@ describe('GET /api/health', () => {
   it('answers ok', async () => {
     const res = await get('/api/health');
     expect(res.status).toBe(200);
-    expect(await json(res)).toEqual({ ok: true, version: '0.10.0' });
+    expect(await json(res)).toEqual({ ok: true, version: '0.11.0' });
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     expect(res.headers.get('x-frame-options')).toBe('DENY');
     expect(res.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
