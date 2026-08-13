@@ -110,7 +110,7 @@ export function validateCriteria(criteria: FilterCriteria): CriteriaError[] {
   return errors;
 }
 
-function matches(tweet: Tweet, criteria: FilterCriteria, from: number | null, to: number | null): boolean {
+function matches(tweet: Tweet, criteria: FilterCriteria, from: number | null, to: number | null, keywordLower?: string): boolean {
   // 1. category gate — exactly one applies. A like is its own category and the
   //    原文/リプライ/RT toggles never gate it (they describe the account's posts).
   const category = categoryOf(tweet);
@@ -135,7 +135,7 @@ function matches(tweet: Tweet, criteria: FilterCriteria, from: number | null, to
 
   // 4. keyword, case-insensitive substring; empty keyword is a no-op in both modes
   if (criteria.keyword !== undefined && criteria.keyword !== '') {
-    const hit = tweet.text.toLowerCase().includes(criteria.keyword.toLowerCase());
+    const hit = tweet.text.toLowerCase().includes(keywordLower ?? criteria.keyword.toLowerCase());
     if (criteria.keywordMode === 'exclude' ? hit : !hit) return false;
   }
 
@@ -179,7 +179,8 @@ export function applyFilter(tweets: readonly Tweet[], criteria: FilterCriteria):
   const from = dayBound(criteria.from, false);
   const to = dayBound(criteria.to, true);
   if (!from.ok || !to.ok) return [];
-  return tweets.filter((t) => matches(t, criteria, from.ms, to.ms));
+  const keywordLower = criteria.keyword ? criteria.keyword.toLowerCase() : undefined;
+  return tweets.filter((t) => matches(t, criteria, from.ms, to.ms, keywordLower));
 }
 
 export interface TweetStats {

@@ -794,7 +794,8 @@ export async function switchSavedAccount(id: string): Promise<SessionResult | nu
   secrets = { authToken: account.authToken, ct0: account.ct0 };
   current = { connected: true, mode: 'cookie', screenName: verified.screenName, userId: verified.userId ?? account.userId };
   clearManualQueryIds();
-  resetTimelineSource();
+  // Successful timeline choices are keyed by user id, so switching accounts
+  // can retain each account's own fast path without cross-account leakage.
   const refreshed = { ...account, screenName: verified.screenName, userId: verified.userId ?? account.userId, savedAt: new Date().toISOString() };
   await persist(refreshed);
   await saveAccount(refreshed);

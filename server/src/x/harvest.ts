@@ -1,4 +1,6 @@
 import { maskSecret } from '../config.js';
+import { readdir, rm } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { PlaywrightTransportOptions } from './playwright.js';
 import { HOME_URL, X_ORIGIN, openLoggedInContext, readCookie } from './playwright.js';
 
@@ -32,6 +34,40 @@ export type HarvestOptions = PlaywrightTransportOptions;
 export interface HarvestedCookies {
   authToken: string;
   ct0: string;
+}
+
+/**
+ * Cache-only paths safe to remove after Chrome has closed.
+ * Cookie/Network/Login Data are deliberately absent: they carry the login.
+ */
+export function browserCachePaths(profileDir: string): string[] {
+  const base = join(profileDir, 'Default');
+  return [
+    join(base, 'Cache'),
+    join(base, 'Code Cache'),
+    join(base, 'GPUCache'),
+    join(base, 'DawnGraphiteCache'),
+    join(base, 'DawnWebGPUCache'),
+    join(base, 'Service Worker', 'CacheStorage'),
+    join(base, 'Service Worker', 'ScriptCache'),
+    join(profileDir, 'GrShaderCache'),
+    join(profileDir, 'ShaderCache'),
+  ];
+}
+
+/** Best-effort cleanup; a locked cache must never turn a successful login into a failure. */
+export async function cleanupBrowserCaches(profileDir: string): Promise<void> {
+  await Promise.all(browserCachePaths(profileDir).map((path) =>
+    rm(path, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }).catch(() => undefined),
+  ));
+  try {
+    const names = await readdir(join(profileDir, 'BrowserMetrics'));
+    await Promise.all(names.map((name) =>
+      rm(join(profileDir, 'BrowserMetrics', name), { force: true }).catch(() => undefined),
+    ));
+  } catch {
+    // Directory absent or still locked.
+  }
 }
 
 /**
@@ -119,5 +155,6 @@ export async function harvestCookies(opts: HarvestOptions = {}): Promise<Harvest
     // The whole point of harvesting: the browser does not stay open. `finally`
     // rather than a happy-path call, so a throw above cannot leak a chrome.exe.
     await browser.close();
+    await cleanupBrowserCaches(browser.userDataDir);
   }
 }

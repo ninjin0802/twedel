@@ -366,6 +366,8 @@ export interface OpenOptions extends PlaywrightTransportOptions {
 /** A launched, logged-in browser context plus the teardown that owns it. */
 export interface OpenedBrowser {
   context: PwContext;
+  /** Resolved persistent profile path; used for cache-only cleanup after close. */
+  userDataDir: string;
   /** The page sitting on x.com. Reused rather than opening a second tab. */
   page: PwPage;
   /**
@@ -483,7 +485,7 @@ export async function openLoggedInContext(opts: OpenOptions = {}): Promise<Opene
   }
 
   status('Browser session is logged in to X.');
-  return { context, page, close, deps, pollIntervalMs };
+  return { context, page, close, deps, pollIntervalMs, userDataDir };
 }
 
 export interface PlaywrightTransport extends XTransport {

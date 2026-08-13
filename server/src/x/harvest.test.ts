@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { HarvestOptions } from './harvest.js';
-import { harvestCookies } from './harvest.js';
+import { browserCachePaths, harvestCookies } from './harvest.js';
 import type { PlaywrightDeps, PwContext, PwCookie, PwPage } from './playwright.js';
 
 /**
@@ -19,6 +19,15 @@ import type { PlaywrightDeps, PwContext, PwCookie, PwPage } from './playwright.j
 /** Values that must never appear in a message, an error, or a status line. */
 const AUTH = 'HARVEST-SECRET-AUTH-TOKEN';
 const CT0 = 'HARVEST-SECRET-CT0-VALUE';
+
+describe('browser cache cleanup targets', () => {
+  it('includes caches but never login-bearing cookie or Network paths', () => {
+    const paths = browserCachePaths('C:/profile').join('|');
+    expect(paths).toMatch(/CacheStorage/);
+    expect(paths).toMatch(/Code Cache/);
+    expect(paths).not.toMatch(/Cookies|Network|Login Data/);
+  });
+});
 
 class FakePage implements PwPage {
   gotoCalls: string[] = [];

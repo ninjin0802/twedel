@@ -216,6 +216,7 @@ export const TIMELINE_CANDIDATES: readonly TimelineCandidate[] = [
  * traffic pattern worth not generating.
  */
 let workingCandidate: string | null = null;
+const workingCandidateByUser = new Map<string, string>();
 
 /** Which timeline source is in use, for diagnostics. `null` until one works. */
 export function timelineSourceInUse(): string | null {
@@ -225,11 +226,12 @@ export function timelineSourceInUse(): string | null {
 /** Forget the remembered source. Used by tests and by a reconnect. */
 export function resetTimelineSource(): void {
   workingCandidate = null;
+  workingCandidateByUser.clear();
 }
 
 /** The remembered candidate first, then the rest in their declared order. */
-function candidateOrder(): TimelineCandidate[] {
-  const remembered = TIMELINE_CANDIDATES.find((c) => c.label === workingCandidate);
+function candidateOrder(userId: string): TimelineCandidate[] {
+  const remembered = TIMELINE_CANDIDATES.find((c) => c.label === workingCandidateByUser.get(userId));
   if (!remembered) return [...TIMELINE_CANDIDATES];
   return [remembered, ...TIMELINE_CANDIDATES.filter((c) => c !== remembered)];
 }
@@ -750,7 +752,7 @@ export async function fetchUserTweets(opts: FetchTweetsOptions): Promise<Tweet[]
   let used: string | null = null;
   let anyCandidateAnswered = false;
 
-  for (const candidate of candidateOrder()) {
+  for (const candidate of candidateOrder(run.userId)) {
     if (signal?.aborted) break;
 
     // A candidate is refused only when EVERY operation in it was refused: the
@@ -774,6 +776,7 @@ export async function fetchUserTweets(opts: FetchTweetsOptions): Promise<Tweet[]
       used = candidate.label;
       // Remember it so the next run does not re-probe the dead ones.
       workingCandidate = candidate.label;
+      workingCandidateByUser.set(run.userId, candidate.label);
       break;
     }
   }

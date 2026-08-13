@@ -126,14 +126,20 @@ interface LiveJob {
   error: string | null;
   subscribers: Set<(p: LiveProgress) => void>;
   startedAt: number;
+  completedAt: number | null;
 }
 
 const jobs = new Map<string, LiveJob>();
 
 /** Keep the handful a session could plausibly reconnect to; drop the rest. */
 const MAX_JOBS = 10;
+const COMPLETED_JOB_TTL_MS = 5 * 60 * 1000;
 
 function pruneJobs(): void {
+  const cutoff = Date.now() - COMPLETED_JOB_TTL_MS;
+  for (const [id, job] of jobs) {
+    if (job.completedAt !== null && job.completedAt < cutoff) jobs.delete(id);
+  }
   if (jobs.size <= MAX_JOBS) return;
   const oldest = [...jobs.values()].sort((a, b) => a.startedAt - b.startedAt);
   for (const job of oldest.slice(0, jobs.size - MAX_JOBS)) jobs.delete(job.jobId);
@@ -165,6 +171,7 @@ tweetsRouter.post('/tweets/live', async (req, res) => {
     error: null,
     subscribers: new Set(),
     startedAt: Date.now(),
+    completedAt: null,
   };
   jobs.set(jobId, job);
   pruneJobs();
@@ -203,9 +210,11 @@ tweetsRouter.post('/tweets/live', async (req, res) => {
       }
       job.tweets = tweets;
       setTweets(tweets);
+      job.completedAt = Date.now();
       publishJob(job, { fetched: tweets.length, done: true });
     } catch (err: unknown) {
       job.error = err instanceof Error ? err.message : String(err);
+      job.completedAt = Date.now();
       publishJob(job, { done: true, error: job.error });
     }
   })();
@@ -245,7 +254,12 @@ tweetsRouter.get('/tweets/live/:jobId/result', (req, res) => {
   if (job.tweets === null) {
     throw new HttpError(409, 'That live fetch is still running. Wait for the progress stream to finish.');
   }
-  res.json({ tweets: job.tweets });
+  const result = job.tweets;
+  res.json({ tweets: result });
+  // Express serializes synchronously. The canonical copy now lives in the
+  // store and the client; retaining it on the job doubles memory for no value.
+  job.tweets = null;
+  jobs.delete(job.jobId);
 });
 
 /** Test-only: drop every remembered live job. */
