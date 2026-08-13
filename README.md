@@ -11,7 +11,7 @@
 [**Windows版をダウンロード**](https://github.com/ninjin0802/twedel/releases/latest) ・ [使い方](docs/USER_GUIDE.md) ・ [困ったとき](docs/TROUBLESHOOTING.md) ・ [開発を応援](https://ofuse.me/ninjin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/ninjin0802/twedel/windows-build.yml?branch=main&label=CI)](https://github.com/ninjin0802/twedel/actions/workflows/windows-build.yml)
-[![Version](https://img.shields.io/badge/version-0.11.6-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
+[![Version](https://img.shields.io/badge/version-0.12.0-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0078D4?logo=windows)
 ![Architecture](https://img.shields.io/badge/arch-x86__64-555555)
 [![License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
@@ -19,6 +19,12 @@
 </div>
 
 > [!CAUTION]
+> **twedelはX公式APIではなく、XのWebクライアント向け非公開（内部）APIを使用します。**
+> Xの利用規約に抵触すると判断される可能性があり、仕様変更による停止、アクセス制限、アカウントの一時ロック・凍結などのリスクがあります。利用はご自身の判断と責任で行ってください。開発者はアカウント制限やデータ損失を保証できません。
+>
+> 初回起動時には、このリスクを確認して同意しない限りアプリを操作できません。Windowsアプリ版では、保存する `auth_token` と `ct0` をWindows DPAPI（Electron `safeStorage`）で暗号化します。暗号化された認証情報は、原則として保存したWindowsユーザーでのみ復号できます。
+> また、Windowsアプリ版の画面からバックエンドへの操作と進捗通知はElectron IPCを通ります。認証Cookieはlocalhost HTTPへ送信しません。Electronメインプロセス内の既存処理が利用する内部APIは `127.0.0.1` のみに限定し、起動ごとの秘密トークンで認証します。認証CookieがX以外の外部サーバーへ送信されることはありません。
+>
 > 削除したポストは元に戻せません。必要なデータは、事前にXの「データのアーカイブをダウンロード」から保存してください。
 
 ## まずはここから

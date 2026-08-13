@@ -7,6 +7,7 @@ import { DryRunDialog } from './components/DryRunDialog';
 import { FilterBar } from './components/FilterBar';
 import { ProgressPanel } from './components/ProgressPanel';
 import { ResumeBanner } from './components/ResumeBanner';
+import { RiskConsent, RiskNotice, RISK_CONSENT_KEY } from './components/RiskConsent';
 import { SourcePanel } from './components/SourcePanel';
 import { TweetTable } from './components/TweetTable';
 import { DEFAULT_CRITERIA, applyFilter, hasUnreliableCounts, validateCriteria } from './filter';
@@ -76,6 +77,10 @@ export function deleteButtonState(gate: DeleteGate): { disabled: boolean; title?
 }
 
 export function App() {
+  const [riskAccepted, setRiskAccepted] = useState(() => {
+    try { return window.localStorage.getItem(RISK_CONSENT_KEY) === 'accepted'; }
+    catch { return false; }
+  });
   const [health, setHealth] = useState<Health>('checking');
   const [version, setVersion] = useState<string | null>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -343,6 +348,10 @@ export function App() {
 
   return (
     <div className="app-shell">
+      {!riskAccepted && <RiskConsent onAccept={() => {
+        try { window.localStorage.setItem(RISK_CONSENT_KEY, 'accepted'); } catch {}
+        setRiskAccepted(true);
+      }} />}
       {menuOpen && <button className="menu-backdrop" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)} />}
       <aside className={`app-sidebar${menuOpen ? ' app-sidebar--open' : ''}`} aria-label="メインメニュー">
         <div className="sidebar-brand">
@@ -363,7 +372,7 @@ export function App() {
               <option value="system">システム</option><option value="light">ライト</option><option value="dark">ダーク</option>
             </select>
           </label>
-          <span className="sidebar-version">Version {version ?? '0.11.6'}</span>
+          <span className="sidebar-version">Version {version ?? '0.12.0'}</span>
         </div>
       </aside>
 
@@ -385,6 +394,8 @@ export function App() {
       </header>
 
       <div className="app-content">
+
+      <RiskNotice />
 
       {(updateState.status === 'available' || updateState.status === 'downloaded') && (
         <div className="update-banner" role="status">

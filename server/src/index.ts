@@ -13,6 +13,9 @@ import { logRouter } from './routes/log.js';
 import { runRouter } from './routes/run.js';
 import { sessionRouter } from './routes/session.js';
 import { tweetsRouter } from './routes/tweets.js';
+
+export { configureCredentialProtection } from './x/credentialProtection.js';
+export { setCredentials } from './x/session.js';
 import { getSession } from './x/session.js';
 
 const LOOPBACK_HOST = /^(127\.0\.0\.1|localhost)(:\d+)?$/i;
@@ -48,6 +51,16 @@ function securityHeaders(_req: Request, res: Response, next: NextFunction): void
   next();
 }
 
+/** Packaged app requests carry a per-launch secret injected by Electron, never by renderer JS. */
+export function requireLocalApiToken(req: Request, res: Response, next: NextFunction): void {
+  const expected = process.env['TWEDEL_API_TOKEN'];
+  if (expected && req.headers['x-twedel-token'] !== expected) {
+    res.status(403).json({ error: 'Local API authentication failed.' });
+    return;
+  }
+  next();
+}
+
 /**
  * Build the Express app.
  *
@@ -60,6 +73,7 @@ export function createApp(): Express {
   app.disable('x-powered-by');
   app.use(localOnly);
   app.use(securityHeaders);
+  app.use('/api', requireLocalApiToken);
 
   // Archives can produce very large JSON bodies (an id list for a 100k-tweet
   // account is a few MB on its own).

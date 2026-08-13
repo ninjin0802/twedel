@@ -15,6 +15,7 @@ import { resetTimelineSource } from './fetchTweets.js';
 import type { HarvestOptions } from './harvest.js';
 import { harvestCookies } from './harvest.js';
 import { accountsFile, sessionFile } from './paths.js';
+import { isProtectedCredential, protectCredential, revealCredential } from './credentialProtection.js';
 import type { PlaywrightTransportOptions } from './playwright.js';
 import { createPlaywrightTransport } from './playwright.js';
 import {
@@ -68,9 +69,15 @@ function accountId(account: Pick<StoredSession, 'userId' | 'screenName'>): strin
 async function readAccounts(): Promise<StoredSession[]> {
   try {
     const parsed = JSON.parse(await readFile(accountsFile(), 'utf8')) as Partial<StoredAccounts>;
-    return Array.isArray(parsed.accounts)
-      ? parsed.accounts.filter((item) => item?.mode === 'cookie' && item.authToken && item.ct0)
-      : [];
+    if (!Array.isArray(parsed.accounts)) return [];
+    const legacy = parsed.accounts.some((item) =>
+      item?.mode === 'cookie' && (!isProtectedCredential(item.authToken) || !isProtectedCredential(item.ct0)),
+    );
+    const accounts = parsed.accounts
+      .filter((item) => item?.mode === 'cookie' && item.authToken && item.ct0)
+      .map((item) => ({ ...item, authToken: revealCredential(item.authToken), ct0: revealCredential(item.ct0) }));
+    if (legacy) await writeAccounts(accounts);
+    return accounts;
   } catch {
     return [];
   }
@@ -79,7 +86,12 @@ async function readAccounts(): Promise<StoredSession[]> {
 async function writeAccounts(accounts: StoredSession[]): Promise<void> {
   const file = accountsFile();
   await mkdir(dirname(file), { recursive: true });
-  await writeFile(file, `${JSON.stringify({ version: 1, accounts }, null, 2)}\n`, {
+  const protectedAccounts = accounts.map((item) => ({
+    ...item,
+    authToken: protectCredential(item.authToken),
+    ct0: protectCredential(item.ct0),
+  }));
+  await writeFile(file, `${JSON.stringify({ version: 1, accounts: protectedAccounts }, null, 2)}\n`, {
     encoding: 'utf8', mode: 0o600,
   });
 }
@@ -134,7 +146,12 @@ const PLAYWRIGHT_IGNORES_COOKIES_NOTE =
 async function persist(stored: StoredSession): Promise<void> {
   const file = sessionFile();
   await mkdir(dirname(file), { recursive: true });
-  await writeFile(file, `${JSON.stringify(stored, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+  const protectedStored = {
+    ...stored,
+    authToken: protectCredential(stored.authToken),
+    ct0: protectCredential(stored.ct0),
+  };
+  await writeFile(file, `${JSON.stringify(protectedStored, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
 }
 
 async function readStored(): Promise<StoredSession | null> {
@@ -152,15 +169,24 @@ async function readStored(): Promise<StoredSession | null> {
         typeof parsed.ct0 === 'string' &&
         parsed.ct0 !== '');
     if (usable) {
-      return {
+      const stored: StoredSession = {
         version: 1,
         mode,
-        authToken: typeof parsed?.authToken === 'string' ? parsed.authToken : '',
-        ct0: typeof parsed?.ct0 === 'string' ? parsed.ct0 : '',
+        authToken: typeof parsed?.authToken === 'string' ? revealCredential(parsed.authToken) : '',
+        ct0: typeof parsed?.ct0 === 'string' ? revealCredential(parsed.ct0) : '',
         screenName: parsed.screenName,
         userId: parsed.userId,
         savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date().toISOString(),
       };
+      if (
+        mode === 'cookie' &&
+        typeof parsed.authToken === 'string' &&
+        typeof parsed.ct0 === 'string' &&
+        (!isProtectedCredential(parsed.authToken) || !isProtectedCredential(parsed.ct0))
+      ) {
+        await persist(stored);
+      }
+      return stored;
     }
   } catch {
     // Absent or unreadable - treat as "not connected", never as a hard error.

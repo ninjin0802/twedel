@@ -1,11 +1,15 @@
-const { app, BrowserWindow, dialog, ipcMain, session, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, safeStorage, session, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { readFile, rm, writeFile } = require('node:fs/promises');
+const { randomBytes } = require('node:crypto');
 const { basename, dirname, join, resolve } = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 let mainWindow;
+let backendModule;
 let updateState = { status: 'idle' };
+let localApiToken = '';
+const apiStreams = new Map();
 const SUPPORT_URL = 'https://ofuse.me/ninjin';
 const DEVELOPER_PROFILE_URL = 'https://x.com/_nin82';
 
@@ -101,11 +105,88 @@ function configureExternalLinks() {
   ipcMain.handle('external:open-developer-profile', () => shell.openExternal(DEVELOPER_PROFILE_URL));
 }
 
+function configureCredentialBridge() {
+  ipcMain.handle('credentials:set', async (_event, input) => {
+    if (!backendModule) throw new Error('バックエンドの準備が完了していません。');
+    if (!input || (input.mode !== 'cookie' && input.mode !== 'playwright')) {
+      throw new Error('認証方式が正しくありません。');
+    }
+    const authToken = typeof input.authToken === 'string' ? input.authToken : '';
+    const ct0 = typeof input.ct0 === 'string' ? input.ct0 : '';
+    if (authToken.length > 4096 || ct0.length > 4096) throw new Error('認証情報が長すぎます。');
+    if (input.mode === 'cookie' && (!authToken || !ct0)) {
+      throw new Error('auth_token と ct0 の両方が必要です。');
+    }
+    return backendModule.setCredentials(authToken, ct0, input.mode);
+  });
+}
+
+function safeApiPath(value) {
+  if (typeof value !== 'string' || !value.startsWith('/api/')) throw new Error('APIパスが正しくありません。');
+  const url = new URL(value, 'http://127.0.0.1:5174');
+  if (url.origin !== 'http://127.0.0.1:5174') throw new Error('外部APIには接続できません。');
+  return url;
+}
+
+function configureApiBridge() {
+  ipcMain.handle('api:request', async (_event, payload) => {
+    const url = safeApiPath(payload?.path);
+    const init = payload?.init && typeof payload.init === 'object' ? payload.init : {};
+    const response = await fetch(url, {
+      method: typeof init.method === 'string' ? init.method : 'GET',
+      headers: { ...(init.body ? { 'content-type': 'application/json' } : {}), 'x-twedel-token': localApiToken },
+      ...(typeof init.body === 'string' ? { body: init.body } : {}),
+    });
+    return { status: response.status, ok: response.ok, body: await response.text() };
+  });
+  ipcMain.handle('api:subscribe', async (event, payload) => {
+    const url = safeApiPath(payload?.path);
+    const id = String(payload?.id ?? '');
+    if (!id) throw new Error('購読IDが正しくありません。');
+    const controller = new AbortController();
+    apiStreams.set(id, controller);
+    const sender = event.sender;
+    void (async () => {
+      try {
+        const response = await fetch(url, { headers: { 'x-twedel-token': localApiToken }, signal: controller.signal });
+        if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
+        const decoder = new TextDecoder();
+        let buffer = '';
+        for await (const chunk of response.body) {
+          buffer += decoder.decode(chunk, { stream: true }).replace(/\r/g, '');
+          let split;
+          while ((split = buffer.indexOf('\n\n')) >= 0) {
+            const frame = buffer.slice(0, split); buffer = buffer.slice(split + 2);
+            const data = frame.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n');
+            if (data && !sender.isDestroyed()) sender.send(`api:event:${id}`, { type: 'data', data });
+          }
+        }
+      } catch (error) {
+        if (!controller.signal.aborted && !sender.isDestroyed()) sender.send(`api:event:${id}`, { type: 'error', message: error instanceof Error ? error.message : String(error) });
+      } finally { apiStreams.delete(id); }
+    })();
+    return { ok: true };
+  });
+  ipcMain.handle('api:unsubscribe', (_event, id) => {
+    apiStreams.get(String(id))?.abort(); apiStreams.delete(String(id)); return { ok: true };
+  });
+}
+
 async function startBackend() {
   const root = app.getAppPath();
   process.env.TWEDEL_DATA_DIR = join(app.getPath('userData'), 'data');
   process.env.TWEDEL_WEB_DIR = join(root, 'dist');
+  localApiToken = randomBytes(32).toString('base64url');
+  process.env.TWEDEL_API_TOKEN = localApiToken;
   const serverModule = await import(pathToFileURL(join(root, 'dist-server', 'index.js')).href);
+  backendModule = serverModule;
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('Windowsの認証情報暗号化（DPAPI）を利用できないため、安全のため起動を中止しました。');
+  }
+  serverModule.configureCredentialProtection({
+    encrypt: (value) => safeStorage.encryptString(value).toString('base64'),
+    decrypt: (value) => safeStorage.decryptString(Buffer.from(value, 'base64')),
+  });
   await serverModule.startServer();
 }
 
@@ -131,7 +212,9 @@ async function createWindow() {
 
   for (let attempt = 0; attempt < 50; attempt += 1) {
     try {
-      const response = await fetch('http://127.0.0.1:5174/api/health');
+      const response = await fetch('http://127.0.0.1:5174/api/health', {
+        headers: { 'x-twedel-token': localApiToken },
+      });
       if (response.ok) break;
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -142,8 +225,16 @@ async function createWindow() {
 app.whenReady().then(async () => {
   try {
     session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
+    session.defaultSession.webRequest.onBeforeSendHeaders(
+      { urls: ['http://127.0.0.1:5174/api/*'] },
+      (details, callback) => callback({
+        requestHeaders: { ...details.requestHeaders, 'x-twedel-token': localApiToken },
+      }),
+    );
     configureUpdater();
     configureExternalLinks();
+    configureCredentialBridge();
+    configureApiBridge();
     await startBackend();
     await createWindow();
     // The NSIS process can still hold the downloaded installer immediately

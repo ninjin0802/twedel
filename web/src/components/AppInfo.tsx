@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.12.0',
+    title: '認証情報の暗号化と利用リスクの明示',
+    changes: ['Windows DPAPIで保存Cookieを暗号化', '既存の平文Cookieを起動時に暗号化形式へ移行', '初回起動時の利用同意画面と非公式API・アカウント凍結リスクの常設表示を追加'],
+  },
+  {
     version: '0.11.6',
     title: 'READMEバージョンバッジの更新ルールを追加',
     changes: ['READMEのversionバッジを各リリースで必ず更新するルールを追加', 'バッジ、アプリ、package.json、GitHub Releaseのバージョン一致確認を完了条件へ追加'],
@@ -178,7 +183,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.11.6'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.12.0'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -225,7 +230,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.11.6'}</p>
+        <p className="version-number">Version {version ?? '0.12.0'}</p>
         <button
           type="button"
           className="developer-profile"

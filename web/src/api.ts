@@ -16,6 +16,17 @@ import type {
 /** POST /api/session answers 200 with connected:false + message when the cookies are rejected. */
 export type SessionResult = SessionInfo & { message?: string };
 
+interface CredentialBridge {
+  set(input: { authToken?: string; ct0?: string; mode: TransportMode }): Promise<SessionResult>;
+}
+
+interface ApiBridge {
+  request(path: string, init?: { method?: string; body?: string }): Promise<{ status: number; ok: boolean; body: string }>;
+  subscribe(path: string, listener: (payload: { type: 'data' | 'error'; data?: string; message?: string }) => void): () => void;
+}
+
+declare global { interface Window { twedelCredentials?: CredentialBridge; twedelApi?: ApiBridge } }
+
 /** What a source route fetches: the account's own tweets, or its likes. */
 export type FetchSource = 'tweets' | 'likes' | 'all';
 
@@ -57,17 +68,24 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  let res: Response;
+  let status: number;
+  let ok: boolean;
+  let raw: string;
   try {
-    res = await fetch(path, {
-      ...init,
-      headers: init?.body ? { 'content-type': 'application/json', ...init?.headers } : init?.headers,
-    });
+    if (typeof window !== 'undefined' && window.twedelApi) {
+      const result = await window.twedelApi.request(path, {
+        ...(init?.method ? { method: init.method } : {}),
+        ...(typeof init?.body === 'string' ? { body: init.body } : {}),
+      });
+      ({ status, ok, body: raw } = result);
+    } else {
+      const res = await fetch(path, { ...init, headers: init?.body ? { 'content-type': 'application/json', ...init?.headers } : init?.headers });
+      status = res.status; ok = res.ok; raw = await res.text();
+    }
   } catch {
     throw new ApiError('サーバーに接続できません (http://127.0.0.1:5174 が起動していません)', 0);
   }
 
-  const raw = await res.text();
   let body: unknown = null;
   if (raw) {
     try {
@@ -77,12 +95,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
   }
 
-  if (!res.ok) {
+  if (!ok) {
     const message =
       body && typeof body === 'object' && typeof (body as { message?: unknown }).message === 'string'
         ? (body as { message: string }).message
-        : `HTTP ${res.status}`;
-    throw new ApiError(message, res.status);
+        : `HTTP ${status}`;
+    throw new ApiError(message, status);
   }
 
   return body as T;
@@ -120,6 +138,11 @@ export function postSession(input: {
   ct0?: string;
   mode: TransportMode;
 }): Promise<SessionResult> {
+  // In the packaged app credentials cross Electron IPC, never localhost HTTP.
+  if (typeof window !== 'undefined' && window.twedelCredentials) {
+    return window.twedelCredentials.set(input);
+  }
+  // Browser-only development fallback. The packaged app always has the bridge.
   return request('/api/session', { method: 'POST', body: JSON.stringify(input) });
 }
 
@@ -314,6 +337,13 @@ export function subscribe<T>(
   onEvent: (data: T) => void,
   onError?: (error: Error) => void,
 ): () => void {
+  if (typeof window !== 'undefined' && window.twedelApi) {
+    return window.twedelApi.subscribe(url, (payload) => {
+      if (payload.type === 'error') { onError?.(new Error(payload.message ?? 'IPC stream error')); return; }
+      try { onEvent(JSON.parse(payload.data ?? '') as T); }
+      catch { onError?.(new Error('進捗データを解析できませんでした')); }
+    });
+  }
   let closed = false;
   let source: EventSource;
 
