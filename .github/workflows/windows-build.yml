@@ -60,7 +60,7 @@ jobs:
         run: npm ci
 
       - name: Build unsigned Windows installer for SignPath review
-        run: npm run dist:win
+        run: npm run dist:win:ci
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 

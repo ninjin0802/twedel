@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.11.1',
+    title: '署名審査用ビルドを修正',
+    changes: ['GitHub Actions上の暗黙的なRelease公開を無効化', '未署名成果物を正式Releaseへ誤公開せず、SignPath審査用artifactだけへ保存'],
+  },
+  {
     version: '0.11.0',
     title: 'コード署名の申請基盤を整備',
     changes: ['MIT Licenseでオープンソース方針を明確化', 'コード署名ポリシーとプライバシーポリシーを公開', 'GitHub-hosted runnerによるWindowsビルド証跡を追加', 'SignPath Foundation申請・承認後の連携手順を文書化'],
@@ -148,7 +153,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.11.0'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.11.1'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -195,7 +200,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.11.0'}</p>
+        <p className="version-number">Version {version ?? '0.11.1'}</p>
         <p>Developer: ninjin</p>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>

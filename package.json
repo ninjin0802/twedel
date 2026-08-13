@@ -1,6 +1,6 @@
 {
   "name": "twedel",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "author": "ninjin",
   "license": "MIT",
   "private": true,
@@ -16,6 +16,7 @@
     "build": "npm run build:web && npm run build:server",
     "desktop": "npm run build && electron .",
     "dist:win": "npm run build && electron-builder --win nsis",
+    "dist:win:ci": "npm run build && electron-builder --win nsis --publish never",
     "release:win": "npm run build && electron-builder --win nsis --publish always",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.web.json --noEmit",
     "test": "vitest run --passWithNoTests"

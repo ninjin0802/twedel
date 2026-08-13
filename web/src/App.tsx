@@ -363,7 +363,7 @@ export function App() {
               <option value="system">システム</option><option value="light">ライト</option><option value="dark">ダーク</option>
             </select>
           </label>
-          <span className="sidebar-version">Version {version ?? '0.11.0'}</span>
+          <span className="sidebar-version">Version {version ?? '0.11.1'}</span>
         </div>
       </aside>
 
