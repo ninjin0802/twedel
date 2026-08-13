@@ -11,7 +11,7 @@
 [**Windows版をダウンロード**](https://github.com/ninjin0802/twedel/releases/latest) ・ [使い方](docs/USER_GUIDE.md) ・ [困ったとき](docs/TROUBLESHOOTING.md) ・ [開発を応援](https://ofuse.me/ninjin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/ninjin0802/twedel/windows-build.yml?branch=main&label=CI)](https://github.com/ninjin0802/twedel/actions/workflows/windows-build.yml)
-[![Latest Release](https://img.shields.io/github/v/release/ninjin0802/twedel?label=version&color=7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
+[![Version](https://img.shields.io/badge/version-0.11.6-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0078D4?logo=windows)
 ![Architecture](https://img.shields.io/badge/arch-x86__64-555555)
 [![License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)

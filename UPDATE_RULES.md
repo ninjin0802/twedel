@@ -24,6 +24,8 @@
 13. SignPath Foundation承認後は、GitHub-hosted runnerで生成された成果物だけを署名要求へ提出する。
 14. Authenticode署名が`Valid`でない成果物を、署名済みとして公開しない。
 15. 署名後のexeに対してblockmapと`latest.yml`を再生成し、そのハッシュ・サイズ・ファイル名を照合する。
+16. README冒頭の`version`バッジを新しいアプリバージョンへ毎回更新し、`package.json`、アプリ内表示、GitHub Releaseと一致させる。
+17. 公開後にREADMEをGitHub上で確認し、`version`バッジが最新バージョンを表示し、最新Releaseへ正しくリンクすることを確認する。
 
 ## バージョン管理
 
@@ -42,4 +44,5 @@
 - GitHub Release のURL
 - インストーラー、blockmap、`latest.yml` の公開確認
 - Release本文のMarkdown表示確認
+- READMEのversionバッジと公開バージョンの一致確認
 - 実施したテストとビルドの結果

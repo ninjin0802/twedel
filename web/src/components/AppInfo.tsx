@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.11.6',
+    title: 'READMEバージョンバッジの更新ルールを追加',
+    changes: ['READMEのversionバッジを各リリースで必ず更新するルールを追加', 'バッジ、アプリ、package.json、GitHub Releaseのバージョン一致確認を完了条件へ追加'],
+  },
+  {
     version: '0.11.5',
     title: '開発者のXプロフィールを追加',
     changes: ['READMEへ開発者のXアカウントを掲載', 'バージョン情報のプロフィールカードからXを標準ブラウザで開けるように変更', '固定リンク方式で任意URLの外部起動を防止'],
@@ -173,7 +178,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.11.5'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.11.6'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -220,7 +225,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.11.5'}</p>
+        <p className="version-number">Version {version ?? '0.11.6'}</p>
         <button
           type="button"
           className="developer-profile"
