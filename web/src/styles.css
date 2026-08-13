@@ -264,6 +264,22 @@ code {
 .about-mark img { width: 4rem; height: 4rem; display: block; border-radius: 1rem; }
 .info-page > h3, .info-page > p { text-align: center; }
 .version-number { font-weight: 700; }
+.support-card {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: .65rem 1rem;
+  border: 1px solid color-mix(in srgb, #f28aa8 45%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, #f28aa8 9%, var(--surface-2));
+}
+.support-card p { margin: .3rem 0 0; color: var(--muted); font-size: .84rem; }
+.support-card small { grid-column: 1 / -1; color: var(--muted); }
+.btn--support { border-color: color-mix(in srgb, #e45f88 55%, var(--border)); color: #c93e6b; background: color-mix(in srgb, #f28aa8 13%, var(--surface)); }
+.btn--support:hover:not(:disabled) { background: color-mix(in srgb, #f28aa8 22%, var(--surface)); }
+@media (max-width: 620px) { .support-card { grid-template-columns: 1fr; } .support-card .btn { width: 100%; } }
 .release-list { display: grid; gap: 1rem; margin-top: 1.25rem; }
 .update-box { margin-top: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
 .update-download { margin: 1rem 0; }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, session } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, session, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { readFile, rm, writeFile } = require('node:fs/promises');
 const { basename, dirname, join, resolve } = require('node:path');
@@ -6,6 +6,7 @@ const { pathToFileURL } = require('node:url');
 
 let mainWindow;
 let updateState = { status: 'idle' };
+const SUPPORT_URL = 'https://ofuse.me/ninjin';
 
 function cleanupMarkerFile() {
   return join(app.getPath('userData'), 'update-cleanup.json');
@@ -92,6 +93,12 @@ function configureUpdater() {
   ipcMain.handle('update:install', () => autoUpdater.quitAndInstall(true, true));
 }
 
+function configureExternalLinks() {
+  // The renderer cannot provide an arbitrary URL. Keeping the destination in
+  // the main process prevents a compromised page from opening phishing links.
+  ipcMain.handle('external:open-support', () => shell.openExternal(SUPPORT_URL));
+}
+
 async function startBackend() {
   const root = app.getAppPath();
   process.env.TWEDEL_DATA_DIR = join(app.getPath('userData'), 'data');
@@ -134,6 +141,7 @@ app.whenReady().then(async () => {
   try {
     session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
     configureUpdater();
+    configureExternalLinks();
     await startBackend();
     await createWindow();
     // The NSIS process can still hold the downloaded installer immediately

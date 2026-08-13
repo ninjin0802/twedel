@@ -10,3 +10,6 @@ contextBridge.exposeInMainWorld('twedelUpdates', {
     return () => ipcRenderer.removeListener('update:state', handler);
   },
 });
+contextBridge.exposeInMainWorld('twedelExternal', {
+  openSupportPage: () => ipcRenderer.invoke('external:open-support'),
+});

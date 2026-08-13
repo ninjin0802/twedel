@@ -4,26 +4,29 @@ import { AppInfo, RELEASES } from './AppInfo';
 
 describe('AppInfo', () => {
   it('shows the running version on the about page', () => {
-    const html = renderToStaticMarkup(<AppInfo page="about" version="0.11.1" />);
-    expect(html).toContain('Version 0.11.1');
+    const html = renderToStaticMarkup(<AppInfo page="about" version="0.11.2" />);
+    expect(html).toContain('Version 0.11.2');
     expect(html).toContain('Developer: ninjin');
     expect(html).toContain('更新を確認');
     expect(RELEASES.find((release) => release.version === '0.4.1')?.changes).toContain('起動時に新しいバージョンがある場合はアプリ内へ通知');
     expect(html).toContain('削除した投稿の履歴ログは保存しません');
+    expect(html).toContain('OFUSEで支援する');
+    expect(html).toContain('支援の有無による機能差はありません');
+    expect(html).toContain('外部サイト（ofuse.me）');
   });
 
   it('shows release notes newest first', () => {
     const html = renderToStaticMarkup(<AppInfo page="updates" version="0.4.0" />);
-    expect(RELEASES[0].version).toBe('0.11.1');
-    expect(RELEASES[0].changes).toContain('GitHub Actions上の暗黙的なRelease公開を無効化');
-    expect(html.indexOf('v0.11.1')).toBeLessThan(html.indexOf('v0.11.0'));
+    expect(RELEASES[0].version).toBe('0.11.2');
+    expect(RELEASES[0].changes).toContain('支援の有無による機能差がないことを明記');
+    expect(html.indexOf('v0.11.2')).toBeLessThan(html.indexOf('v0.11.1'));
     expect(html).not.toContain('>更新を確認</button>');
     expect(html).toContain('ハンバーガーメニューを追加');
     expect(html).toContain('削除完了後に対象を一覧から自動で取り除く');
   });
 
   it('shows an accessible progress bar while downloading an update', () => {
-    const html = renderToStaticMarkup(<AppInfo page="about" version="0.11.1" updateState={{ status: 'downloading', percent: 42 }} />);
+    const html = renderToStaticMarkup(<AppInfo page="about" version="0.11.2" updateState={{ status: 'downloading', percent: 42 }} />);
     expect(html).toContain('role="progressbar"');
     expect(html).toContain('aria-valuenow="42"');
     expect(html).toContain('width:42%');

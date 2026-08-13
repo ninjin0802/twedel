@@ -12,6 +12,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.11.2',
+    title: 'OFUSEによる任意支援を追加',
+    changes: ['バージョン情報ページへ「開発を支援する」を追加', '支援ページをOSの標準ブラウザで安全に表示', '支援の有無による機能差がないことを明記'],
+  },
+  {
     version: '0.11.1',
     title: '署名審査用ビルドを修正',
     changes: ['GitHub Actions上の暗黙的なRelease公開を無効化', '未署名成果物を正式Releaseへ誤公開せず、SignPath審査用artifactだけへ保存'],
@@ -153,7 +158,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.11.1'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.11.2'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -200,10 +205,24 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.11.1'}</p>
+        <p className="version-number">Version {version ?? '0.11.2'}</p>
         <p>Developer: ninjin</p>
         <p>自分のX投稿を取得・絞り込み・一括削除する、Windows向けローカルアプリです。</p>
         <p className="hint">認証情報と一時チェックポイントはこのPC内に保存されます。削除した投稿の履歴ログは保存しません。</p>
+        <div className="support-card">
+          <div>
+            <strong>開発を支援する</strong>
+            <p>支援は完全に任意です。支援の有無による機能差はありません。</p>
+          </div>
+          <button
+            type="button"
+            className="btn btn--support"
+            onClick={() => void window.twedelExternal?.openSupportPage()}
+            disabled={typeof window === 'undefined' || !window.twedelExternal}
+            title="OFUSEを標準ブラウザで開きます"
+          >OFUSEで支援する ↗</button>
+          <small>外部サイト（ofuse.me）を標準ブラウザで開きます。</small>
+        </div>
         <UpdateControls version={version} updateState={updateState} updateBlocked={updateBlocked} onCheck={onCheck} onDownload={onDownload} onInstall={onInstall} />
       </section>
     );

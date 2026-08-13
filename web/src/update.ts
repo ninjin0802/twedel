@@ -11,5 +11,8 @@ interface UpdateBridge {
   install(): Promise<void>;
   onState(listener: (state: UpdateState) => void): () => void;
 }
-declare global { interface Window { twedelUpdates?: UpdateBridge } }
+interface ExternalBridge {
+  openSupportPage(): Promise<void>;
+}
+declare global { interface Window { twedelUpdates?: UpdateBridge; twedelExternal?: ExternalBridge } }
 export const updates = typeof window === 'undefined' ? undefined : window.twedelUpdates;
