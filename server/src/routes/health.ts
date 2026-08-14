@@ -3,5 +3,5 @@ import { Router } from 'express';
 export const healthRouter = Router();
 
 healthRouter.get('/health', (_req, res) => {
-  res.json({ ok: true, version: '0.12.0' });
+  res.json({ ok: true, version: process.env['TWEDEL_APP_VERSION'] ?? 'dev' });
 });

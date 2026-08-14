@@ -176,6 +176,7 @@ async function startBackend() {
   const root = app.getAppPath();
   process.env.TWEDEL_DATA_DIR = join(app.getPath('userData'), 'data');
   process.env.TWEDEL_WEB_DIR = join(root, 'dist');
+  process.env.TWEDEL_APP_VERSION = app.getVersion();
   localApiToken = randomBytes(32).toString('base64url');
   process.env.TWEDEL_API_TOKEN = localApiToken;
   const serverModule = await import(pathToFileURL(join(root, 'dist-server', 'index.js')).href);

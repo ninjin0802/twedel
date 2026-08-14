@@ -13,6 +13,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.13.3',
+    title: 'アプリ内バージョン表示を修正',
+    changes: ['バックエンドの古い固定バージョンが画面表示を上書きする問題を修正', 'Electron実行ファイルのバージョンを画面へ直接連携', 'package・exe・アプリ内表示が常に一致するように変更'],
+  },
+  {
     version: '0.13.2',
     title: '英語表示の動的アカウント欄を修正',
     changes: ['保存済みアカウント名を含む表示が代替エラー文へ変わる問題を修正', '部分一致の翻訳順序を見直して日英混在を防止', '実アカウントを模擬した全ページ検査を追加'],
@@ -199,7 +204,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.13.2'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.13.3'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -247,7 +252,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.13.2'}</p>
+        <p className="version-number">Version {version ?? '0.13.3'}</p>
         <button
           type="button"
           className="developer-profile"
