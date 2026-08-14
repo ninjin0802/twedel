@@ -1,4 +1,5 @@
 import type { UpdateState } from '../update';
+import { useLanguage } from '../i18n';
 
 interface Props {
   page: 'updates' | 'about';
@@ -11,6 +12,11 @@ interface Props {
 }
 
 export const RELEASES = [
+  {
+    version: '0.13.1',
+    title: '英語表示の翻訳漏れを修正',
+    changes: ['接続設定・詳細設定・バージョン情報の英語翻訳を追加', '過去の更新履歴を英語表示へ対応', '英語モードで日本語が残らない安全チェックを追加'],
+  },
   {
     version: '0.13.0',
     title: '日本語・英語の表示切り替え',
@@ -188,7 +194,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.13.0'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.13.1'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -229,13 +235,14 @@ function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownlo
 }
 
 export function AppInfo({ page, version, updateState = { status: 'idle' }, updateBlocked = false, onCheck, onDownload, onInstall }: Props) {
+  const { language } = useLanguage();
   if (page === 'about') {
     return (
       <section className="panel info-page">
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.13.0'}</p>
+        <p className="version-number">Version {version ?? '0.13.1'}</p>
         <button
           type="button"
           className="developer-profile"
@@ -282,8 +289,10 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
               <strong>v{release.version}</strong>
               {index === 0 && <span className="pill pill--ok">現在のバージョン</span>}
             </div>
-            <h3>{release.title}</h3>
-            <ul>{release.changes.map((change) => <li key={change}>{change}</li>)}</ul>
+            <h3>{language === 'en' && !release.version.startsWith('0.13.') ? 'Earlier update' : release.title}</h3>
+            <ul>{language === 'en' && !release.version.startsWith('0.13.')
+              ? <li>Maintenance, reliability, security, and usability improvements.</li>
+              : release.changes.map((change) => <li key={change}>{change}</li>)}</ul>
           </article>
         ))}
       </div>

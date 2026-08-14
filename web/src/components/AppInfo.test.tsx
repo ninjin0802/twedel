@@ -23,9 +23,9 @@ describe('AppInfo', () => {
 
   it('shows release notes newest first', () => {
     const html = renderToStaticMarkup(<AppInfo page="updates" version="0.4.0" />);
-    expect(RELEASES[0].version).toBe('0.13.0');
-    expect(RELEASES[0].changes).toContain('アプリ画面を日本語と英語で切り替え可能に変更');
-    expect(html.indexOf('v0.13.0')).toBeLessThan(html.indexOf('v0.12.0'));
+    expect(RELEASES[0].version).toBe('0.13.1');
+    expect(RELEASES[0].changes).toContain('英語モードで日本語が残らない安全チェックを追加');
+    expect(html.indexOf('v0.13.1')).toBeLessThan(html.indexOf('v0.13.0'));
     expect(html).not.toContain('>更新を確認</button>');
     expect(html).toContain('ハンバーガーメニューを追加');
     expect(html).toContain('削除完了後に対象を一覧から自動で取り除く');
