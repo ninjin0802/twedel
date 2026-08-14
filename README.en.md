@@ -13,7 +13,7 @@ Fetch regular posts, replies, reposts, and likes together, then filter and clean
 [**Download for Windows**](https://github.com/ninjin0802/twedel/releases/latest) · [User guide (Japanese)](docs/USER_GUIDE.md) · [Troubleshooting (Japanese)](docs/TROUBLESHOOTING.md) · [Support development](https://ofuse.me/ninjin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/ninjin0802/twedel/windows-build.yml?branch=main&label=CI)](https://github.com/ninjin0802/twedel/actions/workflows/windows-build.yml)
-[![Version](https://img.shields.io/badge/version-0.13.1-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
+[![Version](https://img.shields.io/badge/version-0.13.2-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0078D4?logo=windows)
 ![Architecture](https://img.shields.io/badge/arch-x86__64-555555)
 [![License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)

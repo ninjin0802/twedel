@@ -29,6 +29,20 @@ const translations: Array<[string, string]> = [
   ['Xへの接続が完了すると削除できます', 'You can delete after connecting to X'],
   ['自分のポストといいねを一度に読み込みます', 'Load your posts and likes together'],
   ['X アカウント', 'X account'], ['未接続', 'Not connected'], ['Chromeから取得', 'Fetch from Chrome'],
+  ['接続済み', 'Connected'], ['使用中', 'Active'], ['切り替える', 'Switch'],
+  ['＋ 別のアカウントを追加', '+ Add another account'], ['別のアカウントを追加', 'Add another account'],
+  ['アカウント設定をリセット', 'Reset account settings'], ['アカウント切り替え', 'Account switcher'],
+  ['追加時は専用Chromeが開きます。追加したいXアカウントでログインしてください。', 'A dedicated Chrome window opens when adding an account. Sign in with the X account you want to add.'],
+  ['削除・リセットはtwedel内の保存情報だけが対象です。Xのアカウント自体は削除されません。', 'Remove and reset affect only information saved in twedel. The X account itself is not deleted.'],
+  ['削除・リセットはtwedel内の保存情報だけが対象です。', 'Remove and reset affect only information saved in twedel. '],
+  ['Xのアカウント自体は削除されません。', 'The X account itself is not deleted.'],
+  ['をtwedelから削除', 'Remove from twedel'], ['twedelから削除', 'Remove from twedel'],
+  ['に切り替えました。', ' is now active.'], ['をtwedelから削除しました。', ' was removed from twedel.'],
+  ['アカウント設定をリセットしました。', 'Account settings were reset.'],
+  ['接続成功:', 'Connected:'], ['接続できませんでした。', 'Could not connect.'], ['不明', 'unknown'],
+  ['Cookie を Chrome から取得しました。', 'Cookies were fetched from Chrome.'],
+  ['Chrome から Cookie を取得できませんでした。', 'Could not fetch cookies from Chrome.'],
+  ['アカウントを確認できませんでした。', 'Could not verify the account.'],
   ['twedel 専用の Chrome ウィンドウが開きます。そこで X にログインすると auth_token と ct0 を twedel が読み取り、ウィンドウは自動で閉じます (以後は高速な cookie モードで動作)。ログイン状態は専用プロファイル (data/pw-profile) に残るので、次回からは押すだけで取得できます。', 'A dedicated Chrome window opens. Sign in to X there; twedel reads auth_token and ct0, then closes the window automatically. Future fetches use the faster cookie mode, and the sign-in stays in the dedicated profile (data/pw-profile).'],
   ['投稿', 'Posts'], ['通常ポスト・返信・リポスト', 'Posts, replies, and reposts'], ['いいね解除できる投稿', 'Posts whose likes can be removed'],
   ['X からダウンロードした ZIP か展開済みフォルダを指定します。 ポストといいねの両方を読み込みます。アーカイブのいいねには日時がなく、反応数も正確ではないため、一部の絞り込みは利用できません。', 'Choose a ZIP downloaded from X or an extracted folder. Both posts and likes are loaded. Archived likes have no date and unreliable engagement counts, so some filters are unavailable.'],
@@ -69,6 +83,10 @@ const translations: Array<[string, string]> = [
   ['ブラウザの実リクエストからコピー', 'Copy from an actual browser request'], ['など', 'etc.'],
   ['日本語・英語の表示切り替え', 'Japanese and English interface'],
   ['英語表示の翻訳漏れを修正', 'Completed the English translation'],
+  ['英語表示の動的アカウント欄を修正', 'Fixed dynamic account details in English mode'],
+  ['保存済みアカウント名を含む表示が代替エラー文へ変わる問題を修正', 'Fixed account details containing saved usernames being replaced by fallback error text'],
+  ['部分一致の翻訳順序を見直して日英混在を防止', 'Prioritized full phrases and compound words to prevent mixed Japanese and English'],
+  ['実アカウントを模擬した全ページ検査を追加', 'Added full-page checks with a simulated saved account'],
   ['接続設定・詳細設定・バージョン情報の英語翻訳を追加', 'Added English translations for connection settings, advanced settings, and About'],
   ['過去の更新履歴を英語表示へ対応', 'Added English display for earlier release history'],
   ['英語モードで日本語が残らない安全チェックを追加', 'Added a safeguard that prevents Japanese text from remaining in English mode'],
@@ -104,6 +122,7 @@ const translations: Array<[string, string]> = [
   ['確認する', 'View'], ['更新を確認', 'Check for updates'], ['ダウンロードして自動更新', 'Download and update'],
   ['再起動して更新', 'Restart and update'], ['更新内容', 'Release notes'], ['最新版です。', 'You are up to date.'],
   ['キャンセル', 'Cancel'], ['閉じる', 'Close'], ['開始中', 'Starting'], ['すべて', 'All'], ['状態', 'Status'],
+  ['と', 'and'],
   ['再読み込み', 'Reload'], ['日時', 'Time'], ['投稿日', 'Posted'], ['本文 / エラー', 'Text / error'],
   ['削除ログ', 'Deletion log'], ['本文検索', 'Search text'], ['CSV エクスポート', 'Export CSV'],
   ['件を選択中', ' selected'], ['件中', ' of '], ['件', ' items'], ['合計', 'Total'], ['内訳', 'Breakdown'], ['期間', 'Date range'],
@@ -111,10 +130,13 @@ const translations: Array<[string, string]> = [
 
 function translate(value: string): string {
   let result = value;
-  for (const [ja, en] of translations) result = result.replaceAll(ja, en);
-  // Server/plugin messages can introduce text that is newer than this client.
-  // Never leak a partly translated Japanese sentence into English mode.
-  return /[\u3040-\u30ff\u3400-\u9fff]/u.test(result) ? 'English translation unavailable.' : result;
+  // Match complete sentences and compound words before shorter terms such as
+  // 「ポスト」. Otherwise 「リポスト」 becomes the broken hybrid "リPost"
+  // before its more specific translation gets a chance to run.
+  for (const [ja, en] of [...translations].sort((a, b) => b[0].length - a[0].length)) {
+    result = result.replaceAll(ja, en);
+  }
+  return result;
 }
 
 interface LanguageValue { language: Language; setLanguage: (language: Language) => void }
