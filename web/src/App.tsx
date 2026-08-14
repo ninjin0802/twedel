@@ -13,6 +13,7 @@ import { TweetTable } from './components/TweetTable';
 import { DEFAULT_CRITERIA, applyFilter, hasUnreliableCounts, validateCriteria } from './filter';
 import { updates, type UpdateState } from './update';
 import { includePinnedPosts, protectionScope, readProtectedPosts, writeProtectedPosts } from './protection';
+import { useLanguage, useLocalizedRoot } from './i18n';
 
 type Health = 'checking' | 'online' | 'offline';
 type Page = 'main' | 'settings' | 'updates' | 'about';
@@ -77,6 +78,8 @@ export function deleteButtonState(gate: DeleteGate): { disabled: boolean; title?
 }
 
 export function App() {
+  const { language, setLanguage } = useLanguage();
+  const localizedRoot = useLocalizedRoot(language);
   const [riskAccepted, setRiskAccepted] = useState(() => {
     try { return window.localStorage.getItem(RISK_CONSENT_KEY) === 'accepted'; }
     catch { return false; }
@@ -347,7 +350,7 @@ export function App() {
   const currentPage = PAGE_TITLES[page];
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" ref={localizedRoot}>
       {!riskAccepted && <RiskConsent onAccept={() => {
         try { window.localStorage.setItem(RISK_CONSENT_KEY, 'accepted'); } catch {}
         setRiskAccepted(true);
@@ -367,12 +370,18 @@ export function App() {
         </nav>
         <div className="sidebar-footer">
           <label className="theme-control">
+            <span>言語</span>
+            <select value={language} onChange={(event) => setLanguage(event.target.value as 'ja' | 'en')} aria-label="言語">
+              <option value="ja">日本語</option><option value="en">English</option>
+            </select>
+          </label>
+          <label className="theme-control">
             <span>テーマ</span>
             <select value={theme} onChange={(event) => setTheme(event.target.value as ThemeMode)} aria-label="表示テーマ">
               <option value="system">システム</option><option value="light">ライト</option><option value="dark">ダーク</option>
             </select>
           </label>
-          <span className="sidebar-version">Version {version ?? '0.12.0'}</span>
+          <span className="sidebar-version">Version {version ?? '0.13.0'}</span>
         </div>
       </aside>
 

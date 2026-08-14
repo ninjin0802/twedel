@@ -23,9 +23,9 @@ describe('AppInfo', () => {
 
   it('shows release notes newest first', () => {
     const html = renderToStaticMarkup(<AppInfo page="updates" version="0.4.0" />);
-    expect(RELEASES[0].version).toBe('0.12.0');
-    expect(RELEASES[0].changes).toContain('Windows DPAPIで保存Cookieを暗号化');
-    expect(html.indexOf('v0.12.0')).toBeLessThan(html.indexOf('v0.11.6'));
+    expect(RELEASES[0].version).toBe('0.13.0');
+    expect(RELEASES[0].changes).toContain('アプリ画面を日本語と英語で切り替え可能に変更');
+    expect(html.indexOf('v0.13.0')).toBeLessThan(html.indexOf('v0.12.0'));
     expect(html).not.toContain('>更新を確認</button>');
     expect(html).toContain('ハンバーガーメニューを追加');
     expect(html).toContain('削除完了後に対象を一覧から自動で取り除く');
