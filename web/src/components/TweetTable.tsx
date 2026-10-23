@@ -6,10 +6,8 @@ import { categoryOf } from '../filter';
 interface Props {
   tweets: Tweet[];
   selectedIds: ReadonlySet<string>;
-  protectedIds: ReadonlySet<string>;
   onToggle: (id: string, selected: boolean) => void;
   onSelectAll: (selected: boolean) => void;
-  onProtect: (id: string, protect: boolean) => void;
 }
 
 const ROW_HEIGHT = 40;
@@ -38,7 +36,7 @@ function renderCount(value: number | null, reliable: boolean) {
   return value === null ? '—' : value.toLocaleString();
 }
 
-export function TweetTable({ tweets, selectedIds, protectedIds, onToggle, onSelectAll, onProtect }: Props) {
+export function TweetTable({ tweets, selectedIds, onToggle, onSelectAll }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const headCheckRef = useRef<HTMLInputElement>(null);
 
@@ -47,8 +45,7 @@ export function TweetTable({ tweets, selectedIds, protectedIds, onToggle, onSele
     [tweets, selectedIds],
   );
 
-  const selectableCount = useMemo(() => tweets.reduce((n, t) => n + (protectedIds.has(t.id) ? 0 : 1), 0), [tweets, protectedIds]);
-  const allSelected = selectableCount > 0 && selectedInView === selectableCount;
+  const allSelected = tweets.length > 0 && selectedInView === tweets.length;
   const someSelected = selectedInView > 0 && !allSelected;
 
   useEffect(() => {
@@ -71,7 +68,7 @@ export function TweetTable({ tweets, selectedIds, protectedIds, onToggle, onSele
             ref={headCheckRef}
             type="checkbox"
             checked={allSelected}
-            disabled={selectableCount === 0}
+            disabled={tweets.length === 0}
             onChange={(e) => onSelectAll(e.target.checked)}
             aria-label="表示中のすべてを選択"
           />
@@ -81,12 +78,10 @@ export function TweetTable({ tweets, selectedIds, protectedIds, onToggle, onSele
         <span className="table__cell table__cell--text">本文</span>
         <span className="table__cell table__cell--num">いいね</span>
         <span className="table__cell table__cell--num">リポスト</span>
-        <span className="table__cell table__cell--protect">保護</span>
       </div>
 
       <div className="table__counter">
         {tweets.length.toLocaleString()}件中<b>{selectedInView.toLocaleString()}</b>件を選択中
-        {protectedIds.size > 0 && <span className="table__protected-count">・保護 {tweets.filter((t) => protectedIds.has(t.id)).length.toLocaleString()}件</span>}
       </div>
 
       <div className="table__body" ref={scrollRef}>
@@ -98,18 +93,16 @@ export function TweetTable({ tweets, selectedIds, protectedIds, onToggle, onSele
               const tweet = tweets[row.index]!;
               const badge = badgeOf(tweet);
               const checked = selectedIds.has(tweet.id);
-              const protectedPost = protectedIds.has(tweet.id);
               return (
                 <div
                   key={tweet.id}
-                  className={`table__row${checked ? ' is-selected' : ''}${protectedPost ? ' is-protected' : ''}`}
+                  className={`table__row${checked ? ' is-selected' : ''}`}
                   style={{ height: row.size, transform: `translateY(${row.start}px)` }}
                 >
                   <label className="table__cell table__cell--check">
                     <input
                       type="checkbox"
                       checked={checked}
-                      disabled={protectedPost}
                       onChange={(e) => onToggle(tweet.id, e.target.checked)}
                       aria-label={`${tweet.id} を選択`}
                     />
@@ -129,16 +122,6 @@ export function TweetTable({ tweets, selectedIds, protectedIds, onToggle, onSele
                   </span>
                   <span className="table__cell table__cell--num">
                     {renderCount(tweet.retweetCount, tweet.countsReliable)}
-                  </span>
-                  <span className="table__cell table__cell--protect">
-                    <button
-                      type="button"
-                      className={`protect-button${protectedPost ? ' is-active' : ''}`}
-                      onClick={() => onProtect(tweet.id, !protectedPost)}
-                      aria-pressed={protectedPost}
-                      aria-label={`${tweet.id} の保護を${protectedPost ? '解除' : '有効化'}`}
-                      title={protectedPost ? '保護を解除' : '削除対象から保護'}
-                    >{protectedPost ? '🔒' : '🔓'}</button>
                   </span>
                 </div>
               );

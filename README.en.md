@@ -13,7 +13,7 @@ Fetch regular posts, replies, reposts, and likes together, then filter and clean
 [**Download for Windows**](https://github.com/ninjin0802/twedel/releases/latest) · [User guide (Japanese)](docs/USER_GUIDE.md) · [Troubleshooting (Japanese)](docs/TROUBLESHOOTING.md) · [Support development](https://ofuse.me/ninjin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/ninjin0802/twedel/windows-build.yml?branch=main&label=CI)](https://github.com/ninjin0802/twedel/actions/workflows/windows-build.yml)
-[![Version](https://img.shields.io/badge/version-0.13.3-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
+[![Version](https://img.shields.io/badge/version-0.14.0-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0078D4?logo=windows)
 ![Architecture](https://img.shields.io/badge/arch-x86__64-555555)
 [![License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
@@ -39,12 +39,12 @@ Fetch regular posts, replies, reposts, and likes together, then filter and clean
 
 ## Features
 
-| Fetch and manage | Filter and protect | Desktop app |
+| Fetch and manage | Filter and safety | Desktop app |
 |---|---|---|
 | Fetch posts, replies, reposts, and likes together | Filter by date, keyword, type, and engagement | Save and switch between multiple X accounts |
 | Import older posts from an X archive ZIP | Review counts, breakdown, and content before deletion | Resume interrupted operations |
-| Remove completed items from the list automatically | Protect posts separately for each account | Update automatically from inside the app |
-| Protect pinned posts during live fetches | Do not retain deleted text or outcomes in history | Clean unnecessary dedicated-Chrome caches |
+| Remove completed items from the list automatically | Do not retain deleted text or outcomes in history | Update automatically from inside the app |
+| | | Clean unnecessary dedicated-Chrome caches |
 
 ## Basic workflow
 
@@ -55,9 +55,8 @@ Connect to X → Fetch posts and likes → Filter → Select → Review → Dele
 1. Sign in to X using the dedicated Chrome window opened by twedel.
 2. Check the account card and select Fetch.
 3. Filter the list by date, keyword, type, or other criteria.
-4. Protect anything you want to keep with the lock button at the right of its row.
-5. Select the deletion targets and review the count and breakdown.
-6. Start deletion when everything looks correct.
+4. Select the deletion targets and review the count and breakdown.
+5. Start deletion when everything looks correct.
 
 The app interface can be switched between Japanese and English from the language selector in the sidebar. Your choice is saved locally.
 
@@ -77,7 +76,7 @@ Google Chrome is used for X sign-in and credential acquisition. twedel uses a de
 
 ## Security and privacy
 
-- X credentials, account information, and protected post IDs stay on your PC.
+- X credentials, and account information stay on your PC.
 - There is no feature that sends credentials to the developer.
 - The internal local API is bound to `127.0.0.1` and authenticated with a per-launch secret.
 - Electron sandboxing and context isolation are enabled; external sites cannot invoke app operations.

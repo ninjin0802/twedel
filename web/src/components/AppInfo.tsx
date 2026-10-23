@@ -13,6 +13,11 @@ interface Props {
 
 export const RELEASES = [
   {
+    version: '0.14.0',
+    title: 'Linux（deb）版を追加',
+    changes: ['Linux向けdebパッケージを追加', 'Linuxでキーリング（Secret Service）を使って認証情報を暗号化', 'ポストの保護機能と固定ポストの自動保護を廃止'],
+  },
+  {
     version: '0.13.3',
     title: 'アプリ内バージョン表示を修正',
     changes: ['バックエンドの古い固定バージョンが画面表示を上書きする問題を修正', 'Electron実行ファイルのバージョンを画面へ直接連携', 'package・exe・アプリ内表示が常に一致するように変更'],
@@ -204,7 +209,7 @@ function readableReleaseNotes(notes: string): string {
 function UpdateControls({ version, updateState, updateBlocked, onCheck, onDownload, onInstall }: Omit<Props, 'page'>) {
   return (
     <div className="update-box">
-      <strong>現在のバージョン: v{version ?? '0.13.3'}</strong>
+      <strong>現在のバージョン: v{version ?? '0.14.0'}</strong>
       {updateState?.status === 'checking' && <p>アップデートを確認しています…</p>}
       {updateState?.status === 'latest' && <p className="inline-msg inline-msg--ok">最新版です。</p>}
       {updateState?.status === 'available' && <p>v{updateState.version} を利用できます。</p>}
@@ -252,7 +257,7 @@ export function AppInfo({ page, version, updateState = { status: 'idle' }, updat
         <h2>バージョン情報</h2>
         <div className="about-mark" aria-hidden="true"><img src="/icon.png" alt="" /></div>
         <h3>twedel</h3>
-        <p className="version-number">Version {version ?? '0.13.3'}</p>
+        <p className="version-number">Version {version ?? '0.14.0'}</p>
         <button
           type="button"
           className="developer-profile"

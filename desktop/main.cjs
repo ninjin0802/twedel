@@ -13,6 +13,13 @@ const apiStreams = new Map();
 const SUPPORT_URL = 'https://ofuse.me/ninjin';
 const DEVELOPER_PROFILE_URL = 'https://x.com/_nin82';
 
+// Chromium picks KWallet on KDE even when kwalletd cannot start, which leaves
+// safeStorage unavailable. The Secret Service API works with gnome-keyring and
+// recent KWallet alike, so prefer it unless the user chose a store explicitly.
+if (process.platform === 'linux' && !app.commandLine.hasSwitch('password-store')) {
+  app.commandLine.appendSwitch('password-store', 'gnome-libsecret');
+}
+
 function cleanupMarkerFile() {
   return join(app.getPath('userData'), 'update-cleanup.json');
 }
@@ -182,7 +189,9 @@ async function startBackend() {
   const serverModule = await import(pathToFileURL(join(root, 'dist-server', 'index.js')).href);
   backendModule = serverModule;
   if (!safeStorage.isEncryptionAvailable()) {
-    throw new Error('Windowsの認証情報暗号化（DPAPI）を利用できないため、安全のため起動を中止しました。');
+    throw new Error(process.platform === 'linux'
+      ? '認証情報の暗号化（Secret Service / キーリング）を利用できないため、安全のため起動を中止しました。gnome-keyring などのキーリングが動作しているか確認してください。'
+      : 'Windowsの認証情報暗号化（DPAPI）を利用できないため、安全のため起動を中止しました。');
   }
   serverModule.configureCredentialProtection({
     encrypt: (value) => safeStorage.encryptString(value).toString('base64'),
@@ -198,6 +207,8 @@ async function createWindow() {
     minWidth: 900,
     minHeight: 650,
     autoHideMenuBar: true,
+    // Windows takes the icon from the executable; Linux window managers need it set here.
+    ...(process.platform === 'linux' ? { icon: join(app.getAppPath(), 'dist', 'icon.png') } : {}),
     webPreferences: {
       contextIsolation: true,
       sandbox: true,

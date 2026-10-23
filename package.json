@@ -1,6 +1,6 @@
 {
   "name": "twedel",
-  "version": "0.13.3",
+  "version": "0.14.0",
   "author": "ninjin",
   "license": "MIT",
   "homepage": "https://github.com/ninjin0802/twedel",
@@ -79,7 +79,7 @@
     },
     "linux": {
       "target": "deb",
-      "icon": "web/public/icon.png",
+      "icon": "build/icons",
       "category": "Utility",
       "maintainer": "ninjin",
       "artifactName": "twedel_${version}_${arch}.${ext}",

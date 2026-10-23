@@ -33,8 +33,6 @@ export interface Tweet {
    * unchanged: a normal post simply never sets it.
    */
   isLike?: boolean;
-  /** True when the live profile timeline identifies this as the account's pinned post. */
-  isPinned?: boolean;
 }
 
 export interface FilterCriteria {

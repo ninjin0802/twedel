@@ -13,7 +13,7 @@
 [**Windows版をダウンロード**](https://github.com/ninjin0802/twedel/releases/latest) ・ [使い方](docs/USER_GUIDE.md) ・ [困ったとき](docs/TROUBLESHOOTING.md) ・ [開発を応援](https://ofuse.me/ninjin)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/ninjin0802/twedel/windows-build.yml?branch=main&label=CI)](https://github.com/ninjin0802/twedel/actions/workflows/windows-build.yml)
-[![Version](https://img.shields.io/badge/version-0.13.3-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
+[![Version](https://img.shields.io/badge/version-0.14.0-7c5cff)](https://github.com/ninjin0802/twedel/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0078D4?logo=windows)
 ![Architecture](https://img.shields.io/badge/arch-x86__64-555555)
 [![License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
@@ -44,8 +44,8 @@
 |---|---|---|
 | 通常ポスト・返信・リポスト・いいねを一括取得 | 日付・キーワード・種類・反応数で絞り込み | 複数のXアカウントを保存・切り替え |
 | XのアーカイブZIPから古いポストを読込 | 削除前に件数・内訳・内容を確認 | 中断した処理を続きから再開 |
-| 削除完了後に対象を一覧から自動除去 | 残したいポストをアカウント別に保護 | アプリ内から自動アップデート |
-| 固定ポストをライブ取得時に自動保護 | 削除した本文・結果を履歴へ保存しない | 専用Chromeの不要キャッシュを自動整理 |
+| 削除完了後に対象を一覧から自動除去 | 削除した本文・結果を履歴へ保存しない | アプリ内から自動アップデート |
+| | | 専用Chromeの不要キャッシュを自動整理 |
 
 ## 基本的な使い方
 
@@ -56,9 +56,8 @@ Xへ接続 → ポストといいねを取得 → 条件で絞り込み → 対�
 1. 起動時に開く専用ChromeでXへログインします。
 2. アカウントカードを確認して「取得」を押します。
 3. 日付、キーワード、種類などで表示内容を絞り込みます。
-4. 残したいポストは一覧右端の鍵ボタンで保護します。
-5. 削除対象を選択し、確認画面の件数と内訳を確認します。
-6. 問題がなければ削除を実行します。
+4. 削除対象を選択し、確認画面の件数と内訳を確認します。
+5. 問題がなければ削除を実行します。
 
 [詳しい使い方ガイドを見る](docs/USER_GUIDE.md)
 
@@ -78,7 +77,7 @@ Google ChromeはXへのログインと認証情報の取得に使用します。
 
 ## 安全性とプライバシー
 
-- Xの認証情報、アカウント情報、保護対象ポストIDは利用中のPC内だけに保存します。
+- Xの認証情報、アカウント情報は利用中のPC内だけに保存します。
 - 認証情報を開発者へ送信する機能はありません。
 - ローカルAPIは`127.0.0.1`だけで動作し、同じネットワークの別端末から接続できません。
 - Electronのsandboxとcontext isolationを有効にし、外部サイトからのAPI操作や不正な画面遷移を拒否します。
