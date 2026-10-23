@@ -69,9 +69,9 @@ jobs:
         with:
           name: twedel-unsigned-windows-${{ github.sha }}
           path: |
-            dist/twedel-Setup-*.exe
-            dist/twedel-Setup-*.exe.blockmap
-            dist/latest.yml
+            release/win/twedel-Setup-*.exe
+            release/win/twedel-Setup-*.exe.blockmap
+            release/win/latest.yml
           if-no-files-found: error
           retention-days: 14
 
